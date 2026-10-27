@@ -1,0 +1,9 @@
+node_modules
+.env
+.env.local
+.mastra
+.next
+dist
+*.db
+*.db-journal
+.session-artifacts
