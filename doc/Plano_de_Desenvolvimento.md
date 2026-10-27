@@ -20,7 +20,7 @@
 | A5 | **Identidade do usuário vem da sessão**, entra no agent via `requestContext` e nunca como argumento que o modelo escolhe | Garante privacidade (P1 a P3) mesmo com prompt injection | Passar `userId` no prompt ou como parâmetro da tool |
 | A6 | **Conversa fora do modo "agent" não chama o LLM** | Garante o silêncio do agent (T6) e custo zero nesse período | Instruir o modelo a ficar quieto |
 | A7 | **Banco de domínio em SQLite via libSQL**, arquivo separado do banco do Mastra | Roda local sem infraestrutura, sobrevive a reinício (S1, S2) e o mesmo driver aponta para Turso no deploy | Postgres: exige serviço extra para quem avalia |
-| A8 | **Nosso banco é a fonte da verdade das mensagens** (funcionário, agent, analista, eventos de sistema) | O console precisa de uma linha do tempo única, com mensagens humanas | Memory do Mastra como histórico: dividiria a verdade em dois lugares **[Validar]** (spike S2) |
+| A8 | **Nosso banco é a fonte da verdade das mensagens** (funcionário, agent, analista, eventos de sistema) | O console precisa de uma linha do tempo única, com mensagens humanas | Memory do Mastra como histórico: dividiria a verdade em dois lugares. **Confirmada no spike S2** (ver `Spikes_Resultados.md`) |
 | A9 | **Pipeline em dois tempos:** (1) triagem com saída estruturada, (2) resposta com tools. Regras duras ficam em **código** entre os dois | Entrega o "entendeu / ação / confiança / por quê" (V3) e permite regras determinísticas (transferir por baixa confiança, crítico, vencido) | Um agent único com prompt gigante: opaco e difícil de testar |
 | A10 | **Tempo real por SSE** dentro do próprio Next, com *pub/sub* em memória | Suficiente para uma instância; simples de explicar | WebSocket ou serviço externo: peso sem necessidade |
 | A11 | **Relógio injetável** (`Clock`) em toda regra de prazo | Permite testar "há 5 dias", horas úteis e 13:43 sem esperar | `Date.now()` espalhado |
@@ -251,11 +251,11 @@ Objetivo: tirar o medo da ferramenta e **validar as suposições [Validar]** ant
 
 **Pronto quando:** você pergunta "erro 809 na VPN" e vê a tool sendo chamada no Studio.
 
-### S2 — `requestContext`, histórico e memória (alvo: 1 sessão)
+### S2 — `requestContext`, histórico e memória ✅ (concluído em 27/10/2026)
 
 1. Passar `employeeId` por `RequestContext` e lê-lo dentro da tool (`context.requestContext.get(...)`).
 2. Provar que a tool **ignora** qualquer `employeeId` que o modelo tente passar (A5).
-3. Chamar o agent com um **array de mensagens** vindo do seu banco, **sem** `Memory` **[Validar: a assinatura aceita array]**.
+3. Chamar o agent com um **array de mensagens** vindo do seu banco, **sem** `Memory` **[Verificado no S2: aceita array]**.
 4. Comparar com `Memory` (`thread` e `resource`) e decidir A8.
 
 **Pronto quando:** o histórico do seu banco chega ao modelo, e uma tool consegue ler o dono vindo do contexto.
@@ -510,6 +510,7 @@ O painel de decisão (X-39) lê esse registro. A linha de ações (X-11) é deri
 |---|---|---|
 | **Privacidade dos dados** | No plano gratuito, o conteúdo pode ser usado para melhorar os produtos do Google. No pago, não | Usar **somente dados fictícios** (já é o caso: seed próprio). Dizer isso no README. **Nunca** colar dados reais de funcionários nos testes |
 | **Limites de uso** | Há limite por minuto e por dia, **por projeto** (não por chave). O limite diário zera à meia-noite do horário do Pacífico. Os números exatos aparecem no Google AI Studio, na página de rate limit; a documentação não os lista | Anotar os limites reais no spike S6 e no README |
+| **5 requisições por minuto no `gemini-3.6-flash`** | Medido no S2: três perguntas seguidas com tool estouraram o limite (429). Cada resposta com tool gasta 2 requisições | Evals com espaçamento e nova tentativa só para 429; erro tipado `RateLimited`; avisar no README |
 | **Duas chamadas por mensagem** (A9) | A triagem e o atendimento consomem a cota **duas vezes** | Respostas de política (escopo, limite, transferência direta) não chamam o 2º modelo. Medir o consumo por conversa no S6 |
 | **Evals gastam cota** | Os 20 cenários rodam com modelo real | Rodar sob demanda, poucos por vez; deixar fora do CI |
 | **Erro 429 (limite atingido)** | Pode acontecer em demonstração | Erro tipado `RateLimited` + mensagem clara na interface + *retry* com espera. Tratar como o estado "indisponível" do selo (X-09) |
