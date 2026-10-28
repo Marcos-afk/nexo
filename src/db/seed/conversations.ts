@@ -164,6 +164,7 @@ export const seedDrafts: readonly NewDraft[] = [
     mode: "create",
     targetTicketId: null,
     payload: {
+      type: "incident",
       title: "Monitor externo sem imagem",
       description: "O monitor externo parou de dar imagem e o notebook não o reconhece.",
       category: "Hardware",
