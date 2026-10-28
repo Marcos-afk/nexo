@@ -14,18 +14,21 @@
     "format": "biome format --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "pnpm typecheck && pnpm lint && pnpm test"
+    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "db:generate": "drizzle-kit generate"
   },
   "engines": {
     "node": ">=22.18.0"
   },
   "dependencies": {
     "@ai-sdk/react": "4.0.157",
+    "@libsql/client": "0.18.0",
     "@mastra/ai-sdk": "1.11.2",
     "@mastra/core": "1.79.0",
     "@mastra/libsql": "1.27.0",
     "@mastra/observability": "1.21.0",
     "ai": "7.0.153",
+    "drizzle-orm": "0.45.4",
     "next": "16.4.3",
     "react": "19.3.1",
     "react-dom": "19.3.1",
@@ -37,6 +40,7 @@
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "drizzle-kit": "0.31.11",
     "mastra": "1.35.0",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
