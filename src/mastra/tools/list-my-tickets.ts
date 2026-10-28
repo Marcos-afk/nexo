@@ -1,6 +1,10 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import { listTicketsByOwner, ticketPriorities, ticketStatuses } from "../../services/tickets/tickets";
+import {
+  listTicketsByOwner,
+  ticketPriorities,
+  ticketStatuses,
+} from "../../services/tickets/tickets";
 import { readEmployeeId } from "../request-context";
 
 export const listMyTicketsTool = createTool({

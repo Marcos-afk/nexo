@@ -65,10 +65,7 @@ const sampleTickets: readonly Ticket[] = [
   },
 ];
 
-export const listTicketsByOwner = (
-  ownerId: string,
-  status?: TicketStatus,
-): readonly Ticket[] =>
+export const listTicketsByOwner = (ownerId: string, status?: TicketStatus): readonly Ticket[] =>
   sampleTickets.filter(
     (ticket) => ticket.ownerId === ownerId && (status === undefined || ticket.status === status),
   );

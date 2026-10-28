@@ -1,4 +1,4 @@
-import { helpArticles, type HelpArticle } from "./articles";
+import { type HelpArticle, helpArticles } from "./articles";
 
 export interface ArticleMatch {
   readonly article: HelpArticle;
@@ -7,11 +7,7 @@ export interface ArticleMatch {
 
 const MIN_TOKEN_LENGTH = 3;
 
-const normalize = (text: string): string =>
-  text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+const normalize = (text: string): string => text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 const tokenize = (text: string): readonly string[] =>
   normalize(text)
