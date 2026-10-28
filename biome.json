@@ -1,0 +1,156 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": ["**", "!**/next-env.d.ts", "!**/.next", "!**/.mastra", "!**/data"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "plugins": ["./biome-plugins/no-let.grit"],
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "useConst": "error",
+        "noNonNullAssertion": "error",
+        "useBlockStatements": "error",
+        "noParameterAssign": "error",
+        "useImportType": "error",
+        "noNestedTernary": "error",
+        "noUselessElse": "error",
+        "noMagicNumbers": "warn",
+        "useConsistentTypeDefinitions": {
+          "level": "error",
+          "options": {
+            "style": "interface"
+          }
+        }
+      },
+      "suspicious": {
+        "noVar": "error",
+        "noExplicitAny": "error",
+        "noConsole": "error"
+      },
+      "correctness": {
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error"
+      },
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "warn",
+          "options": {
+            "maxAllowedComplexity": 10
+          }
+        },
+        "noExcessiveLinesPerFunction": {
+          "level": "warn",
+          "options": {
+            "maxLines": 30,
+            "skipBlankLines": true
+          }
+        }
+      },
+      "nursery": {
+        "noFloatingPromises": "error",
+        "noMisusedPromises": "error",
+        "useExhaustiveSwitchCases": "error"
+      },
+      "performance": {
+        "noAwaitInLoops": "error"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["src/services/**", "src/domain/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/mastra",
+                      "**/mastra/**",
+                      "@/mastra",
+                      "@/mastra/**",
+                      "**/app",
+                      "**/app/**",
+                      "@/app",
+                      "@/app/**",
+                      "**/features",
+                      "**/features/**",
+                      "@/features",
+                      "@/features/**"
+                    ],
+                    "message": "Fronteira de camadas: services e domain nao importam mastra, app nem features."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/features/**/*.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "fetch": "A14 (MVVM): a View nao faz fetch; chame a API pelo ViewModel."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/**", "**/*.test.ts", "**/*.test.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noMagicNumbers": "off"
+          },
+          "complexity": {
+            "noExcessiveLinesPerFunction": "off"
+          }
+        }
+      }
+    }
+  ]
+}
