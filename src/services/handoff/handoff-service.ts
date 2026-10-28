@@ -25,7 +25,12 @@ import {
   insertMessage,
   type Message,
 } from "../conversations/conversation-service";
-import { assumeTicket, createTicketService } from "../tickets/ticket-service";
+import type { LegacyGuard } from "../tickets/legacy-guard";
+import { createTicketService } from "../tickets/ticket-service";
+
+export interface HandoffServiceDeps extends ConversationServiceDeps {
+  readonly legacy?: LegacyGuard;
+}
 
 export interface QueueItem {
   readonly conversation: Conversation;
@@ -92,7 +97,7 @@ const requireOwnedConversation = async (
 };
 
 const assumeLinkedTicket = async (
-  deps: ConversationServiceDeps,
+  deps: HandoffServiceDeps,
   analystId: string,
   ticketId: string | null,
 ): Promise<void> => {
@@ -106,12 +111,12 @@ const assumeLinkedTicket = async (
     .where(eq(tickets.id, ticketId));
 
   if (ticket && !isClosed(ticket.status)) {
-    await assumeTicket(deps, analystId, ticketId);
+    await createTicketService(deps).assume(analystId, ticketId);
   }
 };
 
 export const requestHandoff = async (
-  deps: ConversationServiceDeps,
+  deps: HandoffServiceDeps,
   ownerId: string,
   conversationId: string,
   input: HandoffInput,
@@ -152,13 +157,16 @@ export const requestHandoff = async (
 };
 
 export const assumeConversation = async (
-  deps: ConversationServiceDeps,
+  deps: HandoffServiceDeps,
   analystId: string,
   conversationId: string,
 ): Promise<Conversation> => {
   const analyst = await requireAnalyst(deps.database, analystId);
   const conversation = await requireConversation(deps.database, conversationId);
   const mode = targetMode(conversation, "assume");
+
+  await assumeLinkedTicket(deps, analyst.id, conversation.ticketId);
+
   const updated: Conversation = {
     ...conversation,
     mode,
@@ -178,13 +186,12 @@ export const assumeConversation = async (
       content: assumedMessage(analyst.name),
     });
   });
-  await assumeLinkedTicket(deps, analyst.id, conversation.ticketId);
 
   return updated;
 };
 
 const releaseConversation = async (
-  deps: ConversationServiceDeps,
+  deps: HandoffServiceDeps,
   analystId: string,
   conversationId: string,
   action: "return" | "close",
@@ -220,19 +227,19 @@ const releaseConversation = async (
 };
 
 export const returnToAgent = (
-  deps: ConversationServiceDeps,
+  deps: HandoffServiceDeps,
   analystId: string,
   conversationId: string,
 ): Promise<Conversation> => releaseConversation(deps, analystId, conversationId, "return");
 
 export const closeAttendance = (
-  deps: ConversationServiceDeps,
+  deps: HandoffServiceDeps,
   analystId: string,
   conversationId: string,
 ): Promise<Conversation> => releaseConversation(deps, analystId, conversationId, "close");
 
 export const sendAnalystMessage = async (
-  deps: ConversationServiceDeps,
+  deps: HandoffServiceDeps,
   analystId: string,
   conversationId: string,
   content: string,
@@ -252,7 +259,7 @@ export const sendAnalystMessage = async (
 };
 
 export const listQueue = async (
-  { database }: ConversationServiceDeps,
+  { database }: HandoffServiceDeps,
   analystId: string,
   { mode, limit = DEFAULT_QUEUE_LIMIT }: QueueOptions = {},
 ): Promise<readonly QueueItem[]> => {
@@ -269,7 +276,7 @@ export const listQueue = async (
   return rows;
 };
 
-export const createHandoffService = (deps: ConversationServiceDeps) => ({
+export const createHandoffService = (deps: HandoffServiceDeps) => ({
   request: (ownerId: string, conversationId: string, input: HandoffInput) =>
     requestHandoff(deps, ownerId, conversationId, input),
   listQueue: (analystId: string, options?: QueueOptions) => listQueue(deps, analystId, options),

@@ -51,6 +51,23 @@ export class ConversationClosedError extends Error {
   }
 }
 
+export class LegacyTransientError extends Error {
+  public constructor(options?: ErrorOptions) {
+    super("O sistema de chamados não respondeu.", options);
+    this.name = "LegacyTransientError";
+  }
+}
+
+export class LegacyUnavailableError extends Error {
+  public constructor(options?: ErrorOptions) {
+    super(
+      "O sistema de chamados está indisponível no momento. Nada foi criado ou alterado; tente novamente em instantes.",
+      options,
+    );
+    this.name = "LegacyUnavailableError";
+  }
+}
+
 export class AnalystRequiredError extends Error {
   public constructor(options?: ErrorOptions) {
     super("Esta ação é exclusiva de analistas do suporte.", options);
