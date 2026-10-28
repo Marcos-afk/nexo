@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { conversationModes } from "../../src/domain/conversation";
 import { type Triage, type TriageIntent, triageIntents } from "../../src/domain/triage";
 import {
+  actionLabelOf,
   CONFIDENCE_HANDOFF_THRESHOLD,
   decideTurn,
   type PolicyFacts,
@@ -21,7 +22,6 @@ const buildTriage = (patch: Partial<Triage> = {}): Triage => ({
 const buildFacts = (patch: Partial<PolicyFacts> = {}): PolicyFacts => ({
   mode: "agent",
   triage: buildTriage(),
-  isCriticalIncident: false,
   hasOverdueTicket: false,
   ...patch,
 });
@@ -63,14 +63,13 @@ const decisionCases: readonly DecisionCase[] = [
   {
     name: "prefers the employee request over a critical incident",
     facts: buildFacts({
-      triage: buildTriage({ intent: "human_request" }),
-      isCriticalIncident: true,
+      triage: buildTriage({ intent: "human_request", signals: ["critical_impact"] }),
     }),
     expected: { kind: "handoff", reason: "employee_request" },
   },
   {
     name: "hands off on a critical incident",
-    facts: buildFacts({ isCriticalIncident: true }),
+    facts: buildFacts({ triage: buildTriage({ signals: ["critical_impact"] }) }),
     expected: { kind: "handoff", reason: "critical_incident" },
   },
   {
@@ -130,5 +129,20 @@ describe("decideTurn: tools by intent", () => {
     }
 
     expect(decision).toEqual({ kind: "answer", tools: expectedTools, offerAnalyst: false });
+  });
+});
+
+describe("actionLabelOf", () => {
+  it.each([
+    { decision: { kind: "skip_agent" }, expected: "skip_agent" },
+    { decision: { kind: "redirect_out_of_scope" }, expected: "redirect_out_of_scope" },
+    { decision: { kind: "handoff", reason: "low_confidence" }, expected: "handoff:low_confidence" },
+    {
+      decision: { kind: "handoff", reason: "critical_incident" },
+      expected: "handoff:critical_incident",
+    },
+    { decision: { kind: "answer", tools: [], offerAnalyst: false }, expected: "answer" },
+  ] as const)("labels $expected", ({ decision, expected }) => {
+    expect(actionLabelOf(decision)).toBe(expected);
   });
 });
