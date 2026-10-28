@@ -1,9 +1,4 @@
-export interface HelpArticle {
-  readonly id: string;
-  readonly title: string;
-  readonly body: string;
-  readonly tags: readonly string[];
-}
+import type { HelpArticle } from "../../domain/help-article";
 
 export const helpArticles: readonly HelpArticle[] = [
   {
