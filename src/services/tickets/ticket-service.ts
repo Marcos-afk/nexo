@@ -18,6 +18,7 @@ import {
 } from "../../domain/ticket-rules";
 import type { Clock } from "../../lib/clock";
 import type { IdGenerator } from "../../lib/ids";
+import { requireAnalyst } from "../analysts/require-analyst";
 
 export interface TicketServiceDeps {
   readonly database: Database;
@@ -249,7 +250,69 @@ export const transferTicketToAnalyst = (
     return { ...ticket, status, updatedAt };
   });
 
+const requireOpenById = async (executor: DatabaseExecutor, ticketId: string): Promise<Ticket> => {
+  const [ticket] = await executor.select().from(tickets).where(eq(tickets.id, ticketId));
+
+  if (!ticket) {
+    throw new TicketNotFoundError(ticketId);
+  }
+
+  if (isClosed(ticket.status)) {
+    throw new TicketClosedError(ticket.number);
+  }
+
+  return ticket;
+};
+
+export const assumeTicket = (
+  deps: TicketServiceDeps,
+  analystId: string,
+  ticketId: string,
+): Promise<Ticket> =>
+  deps.database.transaction(async (transaction) => {
+    await requireAnalyst(transaction, analystId);
+    const ticket = await requireOpenById(transaction, ticketId);
+    const updatedAt = deps.clock.now();
+    const status = "in_progress";
+
+    await transaction.update(tickets).set({ status, updatedAt }).where(eq(tickets.id, ticket.id));
+    await recordEvent(transaction, deps, {
+      ticketId: ticket.id,
+      kind: "assumed",
+      actor: analystId,
+      payload: null,
+    });
+
+    return { ...ticket, status, updatedAt };
+  });
+
+export const resolveTicket = (
+  deps: TicketServiceDeps,
+  analystId: string,
+  ticketId: string,
+  resolution: string,
+): Promise<Ticket> =>
+  deps.database.transaction(async (transaction) => {
+    await requireAnalyst(transaction, analystId);
+    const ticket = await requireOpenById(transaction, ticketId);
+    const now = deps.clock.now();
+    const resolved: Ticket = { ...ticket, status: "resolved", resolvedAt: now, updatedAt: now };
+
+    await transaction.update(tickets).set(resolved).where(eq(tickets.id, ticket.id));
+    await recordEvent(transaction, deps, {
+      ticketId: ticket.id,
+      kind: "resolved",
+      actor: analystId,
+      payload: { resolution },
+    });
+
+    return resolved;
+  });
+
 export const createTicketService = (deps: TicketServiceDeps) => ({
+  assume: (analystId: string, ticketId: string) => assumeTicket(deps, analystId, ticketId),
+  resolve: (analystId: string, ticketId: string, resolution: string) =>
+    resolveTicket(deps, analystId, ticketId, resolution),
   list: (ownerId: string, options?: ListTicketsOptions) => listTickets(deps, ownerId, options),
   get: (ref: TicketRef) => getTicket(deps, ref),
   findSimilar: (ownerId: string, category: string) => findSimilarTickets(deps, ownerId, category),
