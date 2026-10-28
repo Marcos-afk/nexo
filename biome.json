@@ -6,7 +6,14 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/next-env.d.ts", "!**/.next", "!**/.mastra", "!**/data"]
+    "includes": [
+      "**",
+      "!**/next-env.d.ts",
+      "!**/.next",
+      "!**/.mastra",
+      "!**/data",
+      "!**/pnpm-lock.yaml"
+    ]
   },
   "formatter": {
     "enabled": true,
