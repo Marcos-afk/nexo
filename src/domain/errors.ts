@@ -1,3 +1,5 @@
+import type { DraftStatus } from "./conversation";
+
 export class MissingEmployeeContextError extends Error {
   public constructor(options?: ErrorOptions) {
     super("Não foi possível identificar o funcionário desta conversa.", options);
@@ -25,6 +27,47 @@ export class ArticleConditionsInvalidError extends Error {
       options,
     );
     this.name = "ArticleConditionsInvalidError";
+  }
+}
+
+export class ConversationNotFoundError extends Error {
+  public constructor(
+    public readonly conversationId: string,
+    options?: ErrorOptions,
+  ) {
+    super("Não encontrei essa conversa entre as suas conversas.", options);
+    this.name = "ConversationNotFoundError";
+  }
+}
+
+export class DraftNotFoundError extends Error {
+  public constructor(
+    public readonly draftId: string,
+    options?: ErrorOptions,
+  ) {
+    super(`Não encontrei o rascunho ${draftId} entre os seus rascunhos.`, options);
+    this.name = "DraftNotFoundError";
+  }
+}
+
+export class DraftNotPendingError extends Error {
+  public constructor(
+    public readonly draftId: string,
+    public readonly status: DraftStatus,
+    options?: ErrorOptions,
+  ) {
+    super(`O rascunho ${draftId} não está mais pendente (${status}).`, options);
+    this.name = "DraftNotPendingError";
+  }
+}
+
+export class DraftPayloadInvalidError extends Error {
+  public constructor(
+    public readonly draftId: string,
+    options?: ErrorOptions,
+  ) {
+    super(`O conteúdo do rascunho ${draftId} está inválido e não pôde ser confirmado.`, options);
+    this.name = "DraftPayloadInvalidError";
   }
 }
 
