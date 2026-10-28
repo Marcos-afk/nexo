@@ -8,5 +8,7 @@ export const createDatabase = (url: string) => drizzle(createClient({ url }), { 
 
 export type Database = ReturnType<typeof createDatabase>;
 
+export type DatabaseExecutor = Pick<Database, "select" | "insert" | "update">;
+
 export const migrateDatabase = (database: Database): Promise<void> =>
   migrate(database, { migrationsFolder: MIGRATIONS_DIR });
