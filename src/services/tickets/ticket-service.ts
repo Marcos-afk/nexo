@@ -19,11 +19,13 @@ import {
 import type { Clock } from "../../lib/clock";
 import type { IdGenerator } from "../../lib/ids";
 import { requireAnalyst } from "../analysts/require-analyst";
+import { type LegacyGuard, passthroughGuard } from "./legacy-guard";
 
 export interface TicketServiceDeps {
   readonly database: Database;
   readonly clock: Clock;
   readonly ids: IdGenerator;
+  readonly legacy?: LegacyGuard;
 }
 
 export interface TicketRef {
@@ -309,17 +311,26 @@ export const resolveTicket = (
     return resolved;
   });
 
-export const createTicketService = (deps: TicketServiceDeps) => ({
-  assume: (analystId: string, ticketId: string) => assumeTicket(deps, analystId, ticketId),
-  resolve: (analystId: string, ticketId: string, resolution: string) =>
-    resolveTicket(deps, analystId, ticketId, resolution),
-  list: (ownerId: string, options?: ListTicketsOptions) => listTickets(deps, ownerId, options),
-  get: (ref: TicketRef) => getTicket(deps, ref),
-  findSimilar: (ownerId: string, category: string) => findSimilarTickets(deps, ownerId, category),
-  create: (ownerId: string, input: CreateTicketInput) => createTicket(deps, ownerId, input),
-  addNote: (ref: TicketRef, note: string) => addTicketNote(deps, ref, note),
-  reopen: (ref: TicketRef) => reopenTicket(deps, ref),
-  transferToAnalyst: (ref: TicketRef, reason: string) => transferTicketToAnalyst(deps, ref, reason),
-});
+export const createTicketService = (deps: TicketServiceDeps) => {
+  const { run } = deps.legacy ?? passthroughGuard;
+
+  return {
+    assume: (analystId: string, ticketId: string) =>
+      run(() => assumeTicket(deps, analystId, ticketId)),
+    resolve: (analystId: string, ticketId: string, resolution: string) =>
+      run(() => resolveTicket(deps, analystId, ticketId, resolution)),
+    list: (ownerId: string, options?: ListTicketsOptions) =>
+      run(() => listTickets(deps, ownerId, options)),
+    get: (ref: TicketRef) => run(() => getTicket(deps, ref)),
+    findSimilar: (ownerId: string, category: string) =>
+      run(() => findSimilarTickets(deps, ownerId, category)),
+    create: (ownerId: string, input: CreateTicketInput) =>
+      run(() => createTicket(deps, ownerId, input)),
+    addNote: (ref: TicketRef, note: string) => run(() => addTicketNote(deps, ref, note)),
+    reopen: (ref: TicketRef) => run(() => reopenTicket(deps, ref)),
+    transferToAnalyst: (ref: TicketRef, reason: string) =>
+      run(() => transferTicketToAnalyst(deps, ref, reason)),
+  };
+};
 
 export type TicketService = ReturnType<typeof createTicketService>;
