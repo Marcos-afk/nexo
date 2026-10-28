@@ -40,6 +40,16 @@ export class ConversationNotFoundError extends Error {
   }
 }
 
+export class ConversationClosedError extends Error {
+  public constructor(
+    public readonly conversationId: string,
+    options?: ErrorOptions,
+  ) {
+    super("Essa conversa já foi encerrada e não recebe novas mensagens.", options);
+    this.name = "ConversationClosedError";
+  }
+}
+
 export class DraftNotFoundError extends Error {
   public constructor(
     public readonly draftId: string,
