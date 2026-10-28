@@ -9,3 +9,6 @@ dist
 .session-artifacts
 doc
 spikes
+data
+next-env.d.ts
+*.tsbuildinfo
