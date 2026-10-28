@@ -1,0 +1,6 @@
+language js
+
+JsVariableDeclaration() as $declaration where {
+  $declaration <: r"^\s*let\s.*",
+  register_diagnostic(span=$declaration, message="Regra T1 do coding-guide: nunca use let. Use const, um mapa de busca, um early return ou uma funcao auxiliar.", severity="error")
+}

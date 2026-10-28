@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, safeValidateUIMessages, type UIMessage } from "ai";
-import { useEffect, useState, type CSSProperties, type SubmitEvent } from "react";
+import { type CSSProperties, type SubmitEvent, useEffect, useState } from "react";
 
 const CHAT_ENDPOINT = "/api/chat";
 const HISTORY_TIMEOUT_MS = 10_000;
