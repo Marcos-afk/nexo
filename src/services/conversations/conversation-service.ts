@@ -1,4 +1,4 @@
-import { and, desc, eq, ne } from "drizzle-orm";
+import { and, count, desc, eq, ne } from "drizzle-orm";
 import type { Database } from "../../db/client";
 import { conversations, messages } from "../../db/schema";
 import type { MessageAuthorKind } from "../../domain/conversation";
@@ -99,6 +99,22 @@ export const listMessages = async (
   return latest.toReversed();
 };
 
+export const countEmployeeMessages = async (
+  { database }: ConversationServiceDeps,
+  ref: ConversationRef,
+): Promise<number> => {
+  await requireOwned(database, ref);
+
+  const [row] = await database
+    .select({ total: count() })
+    .from(messages)
+    .where(
+      and(eq(messages.conversationId, ref.conversationId), eq(messages.authorKind, "employee")),
+    );
+
+  return row?.total ?? 0;
+};
+
 export interface NewMessageInput {
   readonly conversationId: string;
   readonly authorKind: MessageAuthorKind;
@@ -174,6 +190,7 @@ export const createConversationService = (deps: ConversationServiceDeps) => ({
   getActive: (ownerId: string) => getActiveConversation(deps, ownerId),
   start: (ownerId: string) => startConversation(deps, ownerId),
   listMessages: (ref: ConversationRef, limit?: number) => listMessages(deps, ref, limit),
+  countEmployeeMessages: (ref: ConversationRef) => countEmployeeMessages(deps, ref),
   appendMessage: (ref: ConversationRef, input: AppendMessageInput) =>
     appendMessage(deps, ref, input),
   close: (ref: ConversationRef) => closeConversation(deps, ref),
