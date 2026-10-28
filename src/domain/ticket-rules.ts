@@ -1,4 +1,5 @@
-import type { TicketStatus, TicketType } from "./ticket";
+import { isOverdue } from "./sla";
+import type { Ticket, TicketStatus, TicketType } from "./ticket";
 
 export const REOPEN_WINDOW_DAYS = 7;
 
@@ -10,6 +11,9 @@ const prefixByType = {
 } as const satisfies Record<TicketType, string>;
 
 export const isClosed = (status: TicketStatus): boolean => status === "resolved";
+
+export const isTicketOverdue = (ticket: Pick<Ticket, "status" | "dueAt">, now: Date): boolean =>
+  !isClosed(ticket.status) && isOverdue(ticket.dueAt, now);
 
 export const isReopenable = (resolvedAt: Date, now: Date): boolean =>
   now.getTime() - resolvedAt.getTime() <= REOPEN_WINDOW_DAYS * MS_PER_DAY;
