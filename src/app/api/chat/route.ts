@@ -8,6 +8,7 @@ import {
 } from "ai";
 import { z } from "zod";
 import { SessionMessageLimitReachedError } from "@/domain/errors";
+import { shouldInvokeAgent } from "@/domain/turn-policy";
 import { mastra } from "@/mastra";
 import { EMPLOYEE_ID_KEY } from "@/mastra/request-context";
 import { getServiceDeps } from "@/server/container";
@@ -24,6 +25,7 @@ import { extractText } from "@/services/conversations/history";
 export const dynamic = "force-dynamic";
 
 const SUPPORT_AGENT_ID = "supportAgent";
+const HTTP_ACCEPTED = 202;
 const HTTP_BAD_REQUEST = 400;
 const HTTP_TOO_MANY_REQUESTS = 429;
 const INVALID_BODY_MESSAGE = "Corpo da requisição inválido.";
@@ -121,5 +123,11 @@ export async function POST(request: Request): Promise<Response> {
   const employeeId = getSessionEmployeeId();
   const turn = await startTurn(deps, employeeId, text);
 
-  return turn instanceof Response ? turn : streamAgentReply(deps, employeeId, turn);
+  if (turn instanceof Response) {
+    return turn;
+  }
+
+  return shouldInvokeAgent(turn.mode)
+    ? streamAgentReply(deps, employeeId, turn)
+    : Response.json({ mode: turn.mode }, { status: HTTP_ACCEPTED });
 }
