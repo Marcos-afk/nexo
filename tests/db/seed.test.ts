@@ -1,21 +1,12 @@
 import { and, count, eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { createDatabase, migrateDatabase } from "../../src/db/client";
 import { conversations, drafts, employees, helpArticles, tickets } from "../../src/db/schema";
 import { seedDatabase } from "../../src/db/seed";
 import { isOverdue } from "../../src/domain/sla";
+import { createSeededDatabase } from "../support/database";
 
-const IN_MEMORY_URL = ":memory:";
 const SEED_NOW = new Date("2026-10-28T09:43:00-03:00");
 const ANA_ID = "emp-ana";
-
-const createSeededDatabase = async () => {
-  const database = createDatabase(IN_MEMORY_URL);
-  await migrateDatabase(database);
-  await seedDatabase(database);
-
-  return database;
-};
 
 describe("seed", () => {
   it("is idempotent", async () => {
