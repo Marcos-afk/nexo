@@ -99,38 +99,60 @@ export const listMessages = async (
   return latest.toReversed();
 };
 
+export interface NewMessageInput {
+  readonly conversationId: string;
+  readonly authorKind: MessageAuthorKind;
+  readonly authorId: string | null;
+  readonly content: string;
+  readonly parts?: unknown;
+}
+
+export const insertMessage = async (
+  executor: Pick<Database, "insert" | "update">,
+  { clock, ids }: Pick<ConversationServiceDeps, "clock" | "ids">,
+  input: NewMessageInput,
+): Promise<Message> => {
+  const now = clock.now();
+  const message: Message = {
+    id: ids.next(),
+    conversationId: input.conversationId,
+    authorKind: input.authorKind,
+    authorId: input.authorId,
+    content: input.content,
+    parts: input.parts ?? null,
+    createdAt: now,
+    deliveredAt: null,
+    readAt: null,
+  };
+
+  await executor.insert(messages).values(message);
+  await executor
+    .update(conversations)
+    .set({ updatedAt: now })
+    .where(eq(conversations.id, input.conversationId));
+
+  return message;
+};
+
 export const appendMessage = (
-  { database, clock, ids }: ConversationServiceDeps,
+  deps: ConversationServiceDeps,
   ref: ConversationRef,
   input: AppendMessageInput,
 ): Promise<Message> =>
-  database.transaction(async (transaction) => {
+  deps.database.transaction(async (transaction) => {
     const conversation = await requireOwned(transaction, ref);
 
     if (conversation.mode === "closed") {
       throw new ConversationClosedError(conversation.id);
     }
 
-    const now = clock.now();
-    const message: Message = {
-      id: ids.next(),
+    return insertMessage(transaction, deps, {
       conversationId: conversation.id,
       authorKind: input.authorKind,
       authorId: input.authorKind === "employee" ? ref.ownerId : null,
       content: input.content,
-      parts: input.parts ?? null,
-      createdAt: now,
-      deliveredAt: null,
-      readAt: null,
-    };
-
-    await transaction.insert(messages).values(message);
-    await transaction
-      .update(conversations)
-      .set({ updatedAt: now })
-      .where(eq(conversations.id, conversation.id));
-
-    return message;
+      parts: input.parts,
+    });
   });
 
 export const closeConversation = async (

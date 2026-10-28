@@ -89,4 +89,24 @@ export const computeDueAt = (priority: TicketPriority, createdAt: Date): Date =>
   return new Date(dueAtWallClockMs - OFFICE_UTC_OFFSET_MS);
 };
 
+export const handoffUrgencies = ["urgent", "normal"] as const;
+
+export type HandoffUrgency = (typeof handoffUrgencies)[number];
+
+const MS_PER_MINUTE = 60_000;
+const URGENT_CONTACT_MINUTES = 30;
+const NORMAL_CONTACT_BUSINESS_HOURS = 2;
+
+const contactDueAtByUrgency = {
+  urgent: (wallClockMs) => wallClockMs + URGENT_CONTACT_MINUTES * MS_PER_MINUTE,
+  normal: (wallClockMs) => addBusinessMs(wallClockMs, NORMAL_CONTACT_BUSINESS_HOURS * MS_PER_HOUR),
+} as const satisfies Record<HandoffUrgency, (wallClockMs: number) => number>;
+
+export const computeContactDueAt = (urgency: HandoffUrgency, transferredAt: Date): Date => {
+  const transferredAtWallClockMs = transferredAt.getTime() + OFFICE_UTC_OFFSET_MS;
+  const dueAtWallClockMs = contactDueAtByUrgency[urgency](transferredAtWallClockMs);
+
+  return new Date(dueAtWallClockMs - OFFICE_UTC_OFFSET_MS);
+};
+
 export const isOverdue = (dueAt: Date, now: Date): boolean => now.getTime() > dueAt.getTime();
