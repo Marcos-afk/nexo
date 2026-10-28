@@ -31,6 +31,28 @@ export class SessionMessageLimitReachedError extends Error {
   }
 }
 
+export class ModelRateLimitedError extends Error {
+  public constructor(
+    public readonly retryAfterSeconds: number | null,
+    options?: ErrorOptions,
+  ) {
+    super(
+      retryAfterSeconds === null
+        ? "O assistente atingiu o limite de uso por agora. Tente de novo em instantes."
+        : `O assistente atingiu o limite de uso por agora. Tente de novo em cerca de ${retryAfterSeconds} segundos.`,
+      options,
+    );
+    this.name = "ModelRateLimitedError";
+  }
+}
+
+export class ModelUnavailableError extends Error {
+  public constructor(options?: ErrorOptions) {
+    super("O assistente está indisponível no momento. Tente de novo em instantes.", options);
+    this.name = "ModelUnavailableError";
+  }
+}
+
 export class ArticleConditionsInvalidError extends Error {
   public constructor(
     public readonly articleId: string,
