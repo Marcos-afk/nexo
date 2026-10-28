@@ -1,4 +1,5 @@
-import type { DraftStatus } from "./conversation";
+import type { ConversationMode, DraftStatus } from "./conversation";
+import type { HandoffAction } from "./handoff";
 
 export class MissingEmployeeContextError extends Error {
   public constructor(options?: ErrorOptions) {
@@ -47,6 +48,35 @@ export class ConversationClosedError extends Error {
   ) {
     super("Essa conversa já foi encerrada e não recebe novas mensagens.", options);
     this.name = "ConversationClosedError";
+  }
+}
+
+export class AnalystRequiredError extends Error {
+  public constructor(options?: ErrorOptions) {
+    super("Esta ação é exclusiva de analistas do suporte.", options);
+    this.name = "AnalystRequiredError";
+  }
+}
+
+export class InvalidConversationTransitionError extends Error {
+  public constructor(
+    public readonly conversationId: string,
+    public readonly mode: ConversationMode,
+    public readonly action: HandoffAction,
+    options?: ErrorOptions,
+  ) {
+    super(`Não é possível "${action}" uma conversa no estado "${mode}".`, options);
+    this.name = "InvalidConversationTransitionError";
+  }
+}
+
+export class ConversationAssignedToOtherError extends Error {
+  public constructor(
+    public readonly conversationId: string,
+    options?: ErrorOptions,
+  ) {
+    super("Essa conversa está sendo atendida por outro analista.", options);
+    this.name = "ConversationAssignedToOtherError";
   }
 }
 
