@@ -7,18 +7,29 @@ import {
   type UIMessage,
 } from "ai";
 import { z } from "zod";
+import { SessionMessageLimitReachedError } from "@/domain/errors";
 import { mastra } from "@/mastra";
 import { EMPLOYEE_ID_KEY } from "@/mastra/request-context";
-import { readMessages, writeMessages } from "@/services/conversations/message-store";
+import { getServiceDeps } from "@/server/container";
+import { getSessionEmployeeId } from "@/server/session";
+import {
+  beginChatTurn,
+  type ChatTurn,
+  loadActiveConversationMessages,
+  recordAgentReply,
+} from "@/services/conversations/chat-turn";
+import type { ConversationServiceDeps } from "@/services/conversations/conversation-service";
+import { extractText } from "@/services/conversations/history";
 
 export const dynamic = "force-dynamic";
 
-const SESSION_EMPLOYEE_ID = "emp-ana";
 const SUPPORT_AGENT_ID = "supportAgent";
 const HTTP_BAD_REQUEST = 400;
-const EMPTY_STEP_PART_TYPE = "step-start";
+const HTTP_TOO_MANY_REQUESTS = 429;
 const INVALID_BODY_MESSAGE = "Corpo da requisição inválido.";
 const INVALID_MESSAGES_MESSAGE = "Mensagens inválidas.";
+const EMPTY_MESSAGE_TEXT = "A mensagem não pode ficar vazia.";
+const MESSAGE_LIMIT_CODE = "session_message_limit_reached";
 
 const bodySchema = z.object({ messages: z.array(z.unknown()).min(1) });
 
@@ -28,7 +39,7 @@ const badRequest = (message: string): Response =>
 const buildRequestContext = (employeeId: string): RequestContext =>
   new RequestContext([[EMPLOYEE_ID_KEY, employeeId]]);
 
-const parseMessages = async (request: Request): Promise<UIMessage[] | Response> => {
+const parseLastUserText = async (request: Request): Promise<string | Response> => {
   const body = bodySchema.safeParse(await request.json().catch(() => null));
 
   if (!body.success) {
@@ -36,23 +47,23 @@ const parseMessages = async (request: Request): Promise<UIMessage[] | Response> 
   }
 
   const validated = await safeValidateUIMessages({ messages: body.data.messages });
+  const last = validated.success ? validated.data.at(-1) : undefined;
 
-  return validated.success ? validated.data : badRequest(INVALID_MESSAGES_MESSAGE);
+  if (last?.role !== "user") {
+    return badRequest(INVALID_MESSAGES_MESSAGE);
+  }
+
+  const text = extractText(last).trim();
+
+  return text.length > 0 ? text : badRequest(EMPTY_MESSAGE_TEXT);
 };
 
-const hasReplyContent = (message: UIMessage): boolean =>
-  message.parts.some((part) => part.type !== EMPTY_STEP_PART_TYPE);
-
-const selectMessagesToPersist = (
-  originalMessages: UIMessage[],
-  messages: UIMessage[],
-  responseMessage: UIMessage,
-): UIMessage[] => (hasReplyContent(responseMessage) ? messages : originalMessages);
-
 const streamAgentReply = async (
+  deps: ConversationServiceDeps,
   employeeId: string,
-  originalMessages: UIMessage[],
+  turn: ChatTurn,
 ): Promise<Response> => {
+  const originalMessages = [...turn.history];
   const agentStream = await handleChatStream({
     mastra,
     agentId: SUPPORT_AGENT_ID,
@@ -60,31 +71,55 @@ const streamAgentReply = async (
     params: { messages: originalMessages, requestContext: buildRequestContext(employeeId) },
   });
 
-  const stream = createUIMessageStream({
+  const stream = createUIMessageStream<UIMessage>({
     originalMessages,
     execute: ({ writer }) => {
       writer.merge(agentStream);
     },
-    onEnd: ({ messages, responseMessage }) =>
-      writeMessages(
-        employeeId,
-        selectMessagesToPersist(originalMessages, messages, responseMessage),
-      ),
+    onEnd: ({ responseMessage }) => recordAgentReply(deps, turn.ref, responseMessage),
   });
 
   return createUIMessageStreamResponse({ stream });
 };
 
+const messageLimitResponse = (error: SessionMessageLimitReachedError): Response =>
+  Response.json(
+    { error: error.message, code: MESSAGE_LIMIT_CODE },
+    { status: HTTP_TOO_MANY_REQUESTS },
+  );
+
+const startTurn = async (
+  deps: ConversationServiceDeps,
+  employeeId: string,
+  text: string,
+): Promise<ChatTurn | Response> => {
+  try {
+    return await beginChatTurn(deps, employeeId, text);
+  } catch (error) {
+    if (error instanceof SessionMessageLimitReachedError) {
+      return messageLimitResponse(error);
+    }
+
+    throw error;
+  }
+};
+
 export async function GET(): Promise<Response> {
-  return Response.json(await readMessages(SESSION_EMPLOYEE_ID));
+  const deps = await getServiceDeps();
+
+  return Response.json(await loadActiveConversationMessages(deps, getSessionEmployeeId()));
 }
 
 export async function POST(request: Request): Promise<Response> {
-  const messages = await parseMessages(request);
+  const text = await parseLastUserText(request);
 
-  if (messages instanceof Response) {
-    return messages;
+  if (text instanceof Response) {
+    return text;
   }
 
-  return streamAgentReply(SESSION_EMPLOYEE_ID, messages);
+  const deps = await getServiceDeps();
+  const employeeId = getSessionEmployeeId();
+  const turn = await startTurn(deps, employeeId, text);
+
+  return turn instanceof Response ? turn : streamAgentReply(deps, employeeId, turn);
 }
