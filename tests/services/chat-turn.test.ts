@@ -68,6 +68,23 @@ describe("beginChatTurn", () => {
   });
 });
 
+describe("beginChatTurn: conversation mode", () => {
+  it("reports the mode and still stores the message when the conversation is with the queue", async () => {
+    const deps = await createDeps();
+    const turn = await beginChatTurn(deps, "emp-carla", "alguma novidade?");
+    const stored = await createConversationService(deps).listMessages(turn.ref);
+
+    expect(turn.mode).toBe("awaiting_analyst");
+    expect(stored.at(-1)?.content).toBe("alguma novidade?");
+  });
+
+  it("reports the agent mode for a fresh conversation", async () => {
+    const deps = await createDeps();
+
+    expect((await beginChatTurn(deps, FABIO, "oi")).mode).toBe("agent");
+  });
+});
+
 describe("recordAgentReply", () => {
   it("ignores a reply that has only a step-start part", async () => {
     const deps = await createDeps();
