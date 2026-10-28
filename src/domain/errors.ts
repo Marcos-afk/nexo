@@ -15,6 +15,19 @@ export class StoredConversationInvalidError extends Error {
   }
 }
 
+export class ArticleConditionsInvalidError extends Error {
+  public constructor(
+    public readonly articleId: string,
+    options?: ErrorOptions,
+  ) {
+    super(
+      `As condições do artigo ${articleId} estão inválidas e ele não pôde ser carregado.`,
+      options,
+    );
+    this.name = "ArticleConditionsInvalidError";
+  }
+}
+
 export class TicketNotFoundError extends Error {
   public constructor(
     public readonly ticketNumber: string,
