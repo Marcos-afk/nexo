@@ -18,6 +18,19 @@ export class StoredConversationInvalidError extends Error {
   }
 }
 
+export class SessionMessageLimitReachedError extends Error {
+  public constructor(
+    public readonly limit: number,
+    options?: ErrorOptions,
+  ) {
+    super(
+      `Você chegou ao limite de ${limit} mensagens desta sessão. Inicie uma nova sessão para continuar.`,
+      options,
+    );
+    this.name = "SessionMessageLimitReachedError";
+  }
+}
+
 export class ArticleConditionsInvalidError extends Error {
   public constructor(
     public readonly articleId: string,
