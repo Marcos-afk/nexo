@@ -3,11 +3,12 @@ import { z } from "zod";
 import { MissingEmployeeContextError } from "../domain/errors";
 
 export const EMPLOYEE_ID_KEY = "employeeId";
+export const CONVERSATION_ID_KEY = "conversationId";
 
-const employeeIdSchema = z.string().min(1);
+const contextValueSchema = z.string().min(1);
 
-export const readEmployeeId = (requestContext: RequestContext): string => {
-  const parsed = employeeIdSchema.safeParse(requestContext.get(EMPLOYEE_ID_KEY));
+const readContextValue = (requestContext: RequestContext, key: string): string => {
+  const parsed = contextValueSchema.safeParse(requestContext.get(key));
 
   if (!parsed.success) {
     throw new MissingEmployeeContextError({ cause: parsed.error });
@@ -15,3 +16,9 @@ export const readEmployeeId = (requestContext: RequestContext): string => {
 
   return parsed.data;
 };
+
+export const readEmployeeId = (requestContext: RequestContext): string =>
+  readContextValue(requestContext, EMPLOYEE_ID_KEY);
+
+export const readConversationId = (requestContext: RequestContext): string =>
+  readContextValue(requestContext, CONVERSATION_ID_KEY);
