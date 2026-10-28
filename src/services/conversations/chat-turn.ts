@@ -1,4 +1,5 @@
 import type { UIMessage } from "ai";
+import type { ConversationMode } from "../../domain/conversation";
 import { SessionMessageLimitReachedError } from "../../domain/errors";
 import {
   appendMessage,
@@ -23,6 +24,7 @@ const TEXT_PART_TYPE = "text";
 
 export interface ChatTurn {
   readonly ref: ConversationRef;
+  readonly mode: ConversationMode;
   readonly history: readonly UIMessage[];
 }
 
@@ -60,7 +62,7 @@ export const beginChatTurn = async (
 
   const stored = await listMessages(deps, ref, AGENT_HISTORY_WINDOW * 2);
 
-  return { ref, history: await toAgentHistory(ownerId, stored) };
+  return { ref, mode: conversation.mode, history: await toAgentHistory(ownerId, stored) };
 };
 
 export const recordAgentReply = async (
