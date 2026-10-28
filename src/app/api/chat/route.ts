@@ -66,7 +66,10 @@ const streamAgentReply = async (
       writer.merge(agentStream);
     },
     onEnd: ({ messages, responseMessage }) =>
-      writeMessages(employeeId, selectMessagesToPersist(originalMessages, messages, responseMessage)),
+      writeMessages(
+        employeeId,
+        selectMessagesToPersist(originalMessages, messages, responseMessage),
+      ),
   });
 
   return createUIMessageStreamResponse({ stream });
