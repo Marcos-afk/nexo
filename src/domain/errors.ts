@@ -237,3 +237,16 @@ export class InvalidEnvironmentError extends Error {
     this.name = "InvalidEnvironmentError";
   }
 }
+
+export class DraftModeChangeError extends Error {
+  public constructor(
+    public readonly draftId: string,
+    options?: ErrorOptions,
+  ) {
+    super(
+      `O rascunho ${draftId} não pode mudar de tipo. Cancele-o e peça um novo rascunho.`,
+      options,
+    );
+    this.name = "DraftModeChangeError";
+  }
+}

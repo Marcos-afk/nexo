@@ -10,6 +10,7 @@ import {
 } from "../../domain/draft";
 import {
   ConversationNotFoundError,
+  DraftModeChangeError,
   DraftNotFoundError,
   DraftNotPendingError,
   DraftPayloadInvalidError,
@@ -76,19 +77,21 @@ const requireOwnedDraft = async (
   return row.draft;
 };
 
-const moveFromPending = async (
+type PendingChanges = Partial<Pick<Draft, "status" | "payload" | "targetTicketId">>;
+
+const updatePending = async (
   database: Database,
   draftId: string,
-  status: DraftStatus,
-): Promise<void> => {
-  const moved = await database
+  changes: PendingChanges,
+): Promise<Draft> => {
+  const [updated] = await database
     .update(drafts)
-    .set({ status })
+    .set(changes)
     .where(and(eq(drafts.id, draftId), eq(drafts.status, "pending")))
-    .returning({ id: drafts.id });
+    .returning();
 
-  if (moved.length > 0) {
-    return;
+  if (updated) {
+    return updated;
   }
 
   const [current] = await database
@@ -96,7 +99,15 @@ const moveFromPending = async (
     .from(drafts)
     .where(eq(drafts.id, draftId));
 
-  throw new DraftNotPendingError(draftId, current?.status ?? status);
+  throw new DraftNotPendingError(draftId, current?.status ?? changes.status ?? "cancelled");
+};
+
+const moveFromPending = async (
+  database: Database,
+  draftId: string,
+  status: DraftStatus,
+): Promise<void> => {
+  await updatePending(database, draftId, { status });
 };
 
 const parseStoredDraft = (draft: Draft): StoredDraft => {
@@ -232,7 +243,63 @@ export const cancelDraft = async (
   return { ...draft, status: "cancelled" };
 };
 
+export interface DraftDetails {
+  readonly draft: Draft;
+  readonly stored: StoredDraft;
+  readonly targetTicketNumber: string | null;
+}
+
+const describeDraft = async (
+  database: Database,
+  ownerId: string,
+  draft: Draft,
+): Promise<DraftDetails> => {
+  const [target] = draft.targetTicketId
+    ? await database
+        .select({ number: tickets.number })
+        .from(tickets)
+        .where(and(eq(tickets.id, draft.targetTicketId), eq(tickets.ownerId, ownerId)))
+    : [];
+
+  return { draft, stored: parseStoredDraft(draft), targetTicketNumber: target?.number ?? null };
+};
+
+export const getDraft = async (
+  { database }: TicketServiceDeps,
+  ownerId: string,
+  draftId: string,
+): Promise<DraftDetails> =>
+  describeDraft(database, ownerId, await requireOwnedDraft(database, ownerId, draftId));
+
+export const editDraft = async (
+  deps: TicketServiceDeps,
+  ownerId: string,
+  draftId: string,
+  input: DraftInput,
+): Promise<DraftDetails> => {
+  const draft = await requireOwnedDraft(deps.database, ownerId, draftId);
+
+  if (draft.status !== "pending") {
+    throw new DraftNotPendingError(draft.id, draft.status);
+  }
+
+  if (draft.mode !== input.mode) {
+    throw new DraftModeChangeError(draft.id);
+  }
+
+  const target = await findTargetTicket(deps, ownerId, input);
+  const updated = await updatePending(deps.database, draft.id, {
+    payload: draftPayloadOf(input),
+    targetTicketId: target?.id ?? null,
+  });
+
+  return describeDraft(deps.database, ownerId, updated);
+};
+
 export const createDraftService = (deps: TicketServiceDeps) => ({
+  get: (ownerId: string, draftId: string) => getDraft(deps, ownerId, draftId),
+  edit: (ownerId: string, draftId: string, input: DraftInput) =>
+    editDraft(deps, ownerId, draftId, input),
   propose: (ownerId: string, conversationId: string, input: DraftInput) =>
     proposeDraft(deps, ownerId, conversationId, input),
   getPending: (ownerId: string, conversationId: string) =>
