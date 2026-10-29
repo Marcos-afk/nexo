@@ -1,5 +1,12 @@
 import { cva, cx } from "class-variance-authority";
-import type { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, Ref } from "react";
+import type {
+  ButtonHTMLAttributes,
+  HTMLAttributes,
+  InputHTMLAttributes,
+  Ref,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from "react";
 
 type InputStateType = "default" | "invalid";
 
@@ -9,6 +16,14 @@ interface InputRootProps extends HTMLAttributes<HTMLDivElement> {
 
 interface InputFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   ref?: Ref<HTMLInputElement>;
+}
+
+interface InputAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  ref?: Ref<HTMLTextAreaElement>;
+}
+
+interface InputSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  ref?: Ref<HTMLSelectElement>;
 }
 
 type InputIconProps = HTMLAttributes<HTMLSpanElement>;
@@ -47,6 +62,29 @@ function Field({ className, ...props }: InputFieldProps) {
   );
 }
 
+function Area({ className, ...props }: InputAreaProps) {
+  return (
+    <textarea
+      data-slot="input-area"
+      className={cx(
+        "min-h-20 w-full resize-y bg-transparent text-sm text-ink outline-none placeholder:text-subtle",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function Select({ className, ...props }: InputSelectProps) {
+  return (
+    <select
+      data-slot="input-select"
+      className={cx("w-full bg-transparent text-sm text-ink outline-none", className)}
+      {...props}
+    />
+  );
+}
+
 function Icon({ className, ...props }: InputIconProps) {
   return (
     <span
@@ -74,4 +112,4 @@ function ErrorMessage({ className, ...props }: InputErrorProps) {
   );
 }
 
-export const Input = { Root, Field, Icon, Action, Error: ErrorMessage };
+export const Input = { Root, Field, Area, Select, Icon, Action, Error: ErrorMessage };

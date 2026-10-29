@@ -10,9 +10,10 @@ import {
   TicketNotFoundError,
   TicketNotReopenableError,
 } from "../../../domain/errors";
-import { formatOfficeDateTime, ticketPriorities } from "../../../domain/sla";
-import { type Ticket, ticketStatusLabels, ticketTypes } from "../../../domain/ticket";
+import { formatOfficeDateTime } from "../../../domain/sla";
+import { type Ticket, ticketStatusLabels } from "../../../domain/ticket";
 import { isClosed, isReopenable, isTicketOverdue } from "../../../domain/ticket-rules";
+import { ticketDetailSchema, ticketSummarySchema } from "../../../domain/ticket-view";
 import type { Clock } from "../../../lib/clock";
 import type { DraftService } from "../../../services/drafts/draft-service";
 import type { HandoffService } from "../../../services/handoff/handoff-service";
@@ -57,28 +58,7 @@ export const runTool = async <T>(action: () => Promise<T>): Promise<T | ToolFail
   }
 };
 
-export const ticketSummarySchema = z.object({
-  number: z.string(),
-  title: z.string(),
-  category: z.string(),
-  status: z
-    .string()
-    .describe("Situação do chamado em português, como deve ser dita ao funcionário"),
-  priority: z.enum(ticketPriorities),
-  dueAt: z.string().describe("Horário de Brasília, já formatado"),
-  overdue: z.boolean(),
-  updatedAt: z.string().describe("Horário de Brasília, já formatado"),
-});
-
-export const ticketDetailSchema = ticketSummarySchema.extend({
-  type: z.enum(ticketTypes),
-  subcategory: z.string().nullable(),
-  description: z.string(),
-  affected: z.string().nullable(),
-  createdAt: z.string().describe("Horário de Brasília, já formatado"),
-  resolvedAt: z.string().nullable().describe("Horário de Brasília, já formatado"),
-  reopenable: z.boolean(),
-});
+export { ticketDetailSchema, ticketSummarySchema };
 
 export const toTicketSummary = (ticket: Ticket, clock: Clock) => ({
   number: ticket.number,

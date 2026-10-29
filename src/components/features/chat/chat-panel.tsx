@@ -21,7 +21,7 @@ export function ChatPanel({ initialMessages, initialSession }: ChatPanelProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div ref={chat.scrollRef} className="min-h-0 flex-1 overflow-y-auto">
         <div
           className={cx(
             "mx-auto flex min-h-full w-full max-w-202 flex-col gap-5 px-6 pt-7 pb-1",
@@ -31,7 +31,11 @@ export function ChatPanel({ initialMessages, initialSession }: ChatPanelProps) {
           {chat.isEmpty ? (
             <EmptyChat isDisabled={chat.isComposerDisabled} onSuggest={chat.sendText} />
           ) : (
-            <MessageList lines={chat.lines} />
+            <MessageList
+              lines={chat.lines}
+              isSendDisabled={chat.isComposerDisabled || chat.isBusy}
+              onSend={chat.sendText}
+            />
           )}
           {chat.isTyping && <TypingIndicator />}
           {chat.replyError && <ChatError message={chat.replyError} onRetry={chat.retry} />}

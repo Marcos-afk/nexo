@@ -218,6 +218,20 @@ export const getPendingDraft = async (
   return row?.draft ?? null;
 };
 
+const rememberCreatedTicket = async (
+  database: Database,
+  draft: Draft,
+  ticket: Ticket,
+): Promise<Draft> => {
+  if (draft.mode !== "create") {
+    return draft;
+  }
+
+  await database.update(drafts).set({ targetTicketId: ticket.id }).where(eq(drafts.id, draft.id));
+
+  return { ...draft, targetTicketId: ticket.id };
+};
+
 export const confirmDraft = async (
   deps: TicketServiceDeps,
   ownerId: string,
@@ -227,8 +241,9 @@ export const confirmDraft = async (
 
   await moveFromPending(deps.database, draft.id, "confirmed");
   const ticket = await applyOrRelease(deps, ownerId, draft);
+  const confirmed = await rememberCreatedTicket(deps.database, draft, ticket);
 
-  return { draft: { ...draft, status: "confirmed" }, ticket };
+  return { draft: { ...confirmed, status: "confirmed" }, ticket };
 };
 
 export const cancelDraft = async (
