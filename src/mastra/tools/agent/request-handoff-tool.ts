@@ -2,6 +2,7 @@ import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { conversationModes } from "../../../domain/conversation";
 import { handoffInputSchema } from "../../../domain/handoff";
+import { formatOfficeDateTime } from "../../../domain/sla";
 import { readConversationId, readEmployeeId } from "../../request-context";
 import { type AgentToolDeps, runTool, withFailure } from "./tool-support";
 
@@ -14,7 +15,7 @@ export const createRequestHandoffTool = ({ handoff }: AgentToolDeps) =>
     outputSchema: withFailure(
       z.object({
         mode: z.enum(conversationModes),
-        contactDueAt: z.string().nullable(),
+        contactDueAt: z.string().nullable().describe("Horário de Brasília, já formatado"),
       }),
     ),
     execute: (input, { requestContext }) =>
@@ -27,7 +28,9 @@ export const createRequestHandoffTool = ({ handoff }: AgentToolDeps) =>
 
         return {
           mode: conversation.mode,
-          contactDueAt: conversation.contactDueAt?.toISOString() ?? null,
+          contactDueAt: conversation.contactDueAt
+            ? formatOfficeDateTime(conversation.contactDueAt)
+            : null,
         };
       }),
   });

@@ -54,6 +54,7 @@ describe("buildSupportInstructions", () => {
 
     expect(instructions).toContain("outra pessoa");
     expect(instructions).toContain("assuntos de TI");
+    expect(instructions).toContain("horário de Brasília");
   });
 
   it.each(agentToolNames)("adds the guidance of %s only when the tool is allowed", (toolName) => {
