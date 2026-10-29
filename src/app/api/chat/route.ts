@@ -1,11 +1,11 @@
 import { createUIMessageStreamResponse, safeValidateUIMessages } from "ai";
 import { z } from "zod";
 import { type ChatReply, handleChatMessage } from "@/conversation/chat-orchestrator";
-import { getChatDeps } from "@/server/container";
-import { getSessionEmployeeId } from "@/server/session";
+import { getContainer } from "@/server/container";
+import { requireSession } from "@/server/session";
 import { loadActiveConversationMessages } from "@/services/conversations/chat-turn";
 import { extractText } from "@/services/conversations/history";
-import { toErrorResponse } from "./error-response";
+import { respondWith } from "../error-response";
 
 export const dynamic = "force-dynamic";
 
@@ -44,32 +44,21 @@ const toResponse = (reply: ChatReply): Response =>
     ? createUIMessageStreamResponse({ stream: reply.stream })
     : Response.json({ mode: reply.mode }, { status: HTTP_ACCEPTED });
 
-export async function GET(): Promise<Response> {
-  const deps = await getChatDeps();
+export const GET = (): Promise<Response> =>
+  respondWith(async () => {
+    const { chat, auth } = await getContainer();
+    const session = await requireSession(auth);
 
-  return Response.json(
-    await loadActiveConversationMessages(deps.conversations, getSessionEmployeeId()),
-  );
-}
+    return Response.json(await loadActiveConversationMessages(chat.conversations, session.user.id));
+  });
 
-export async function POST(request: Request): Promise<Response> {
-  const text = await parseLastUserText(request);
+export const POST = (request: Request): Promise<Response> =>
+  respondWith(async () => {
+    const { chat, auth } = await getContainer();
+    const session = await requireSession(auth);
+    const text = await parseLastUserText(request);
 
-  if (text instanceof Response) {
-    return text;
-  }
-
-  try {
-    const deps = await getChatDeps();
-
-    return toResponse(await handleChatMessage(deps, getSessionEmployeeId(), text));
-  } catch (error) {
-    const response = toErrorResponse(error);
-
-    if (response) {
-      return response;
-    }
-
-    throw error;
-  }
-}
+    return text instanceof Response
+      ? text
+      : toResponse(await handleChatMessage(chat, session.user.id, text));
+  });
