@@ -5,6 +5,7 @@ import { chatViewOf } from "../../src/utils/chat-view";
 const line = (overrides: Partial<ChatLineProps>): ChatLineProps => ({
   id: "m-1",
   authorKind: "agent",
+  analyst: null,
   text: "",
   actions: [],
   attachments: [],

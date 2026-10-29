@@ -1,4 +1,6 @@
 import type { UIMessage } from "ai";
+import { inArray } from "drizzle-orm";
+import { employees } from "../../db/schema";
 import type { ConversationMode } from "../../domain/conversation";
 import { SessionMessageLimitReachedError } from "../../domain/errors";
 import {
@@ -14,6 +16,7 @@ import {
 } from "./conversation-service";
 import {
   AGENT_HISTORY_WINDOW,
+  type AnalystProfiles,
   extractText,
   hasReplyContent,
   SESSION_MESSAGE_LIMIT,
@@ -113,6 +116,30 @@ export const loadChatSession = async (
   };
 };
 
+const loadAnalystProfiles = async (
+  { database }: ConversationServiceDeps,
+  stored: readonly Message[],
+): Promise<AnalystProfiles> => {
+  const ids = [
+    ...new Set(
+      stored.flatMap((message) =>
+        message.authorKind === "analyst" && message.authorId ? [message.authorId] : [],
+      ),
+    ),
+  ];
+
+  if (ids.length === 0) {
+    return new Map();
+  }
+
+  const rows = await database
+    .select({ id: employees.id, name: employees.name, level: employees.level })
+    .from(employees)
+    .where(inArray(employees.id, ids));
+
+  return new Map(rows.map(({ id, ...profile }) => [id, profile]));
+};
+
 export const loadActiveConversationMessages = async (
   deps: ConversationServiceDeps,
   ownerId: string,
@@ -125,5 +152,5 @@ export const loadActiveConversationMessages = async (
 
   const stored = await listMessages(deps, { ownerId, conversationId: conversation.id });
 
-  return toUiMessages(ownerId, stored);
+  return toUiMessages(ownerId, stored, await loadAnalystProfiles(deps, stored));
 };

@@ -5,6 +5,7 @@ import { type MessageAuthorKind, messageAuthorKinds } from "@/domain/conversatio
 import type {
   ChatActionProps,
   ChatActionStatusType,
+  ChatAnalystProps,
   ChatAttachmentProps,
   ChatLineProps,
 } from "@/models/chat";
@@ -19,7 +20,11 @@ import { messageTextOf } from "@/utils/message-text";
 type ToolPart = Parameters<typeof getToolName>[0];
 type AttachmentParser = (output: unknown, key: string) => ChatAttachmentProps[];
 
-const metadataSchema = z.object({ authorKind: z.enum(messageAuthorKinds) });
+const metadataSchema = z.object({
+  authorKind: z.enum(messageAuthorKinds),
+  authorName: z.string().optional(),
+  authorLevel: z.string().nullable().optional(),
+});
 const failureOutputSchema = z.object({ error: z.string() });
 
 const AUTHOR_KIND_BY_ROLE = {
@@ -55,10 +60,18 @@ const ATTACHMENT_PARSERS: Readonly<Record<string, AttachmentParser>> = {
   },
 };
 
-const authorKindOf = (message: UIMessage): MessageAuthorKind => {
+export const authorKindOf = (message: UIMessage): MessageAuthorKind => {
   const metadata = metadataSchema.safeParse(message.metadata);
 
   return metadata.success ? metadata.data.authorKind : AUTHOR_KIND_BY_ROLE[message.role];
+};
+
+const analystOf = (message: UIMessage): ChatAnalystProps | null => {
+  const metadata = metadataSchema.safeParse(message.metadata);
+
+  return metadata.success && metadata.data.authorName
+    ? { name: metadata.data.authorName, level: metadata.data.authorLevel ?? null }
+    : null;
 };
 
 const statusOf = (part: ToolPart): ChatActionStatusType => {
@@ -96,6 +109,7 @@ export const attachmentsOf = (message: UIMessage): ChatAttachmentProps[] =>
 export const toChatLine = (message: UIMessage): ChatLineProps => ({
   id: message.id,
   authorKind: authorKindOf(message),
+  analyst: analystOf(message),
   text: messageTextOf(message),
   actions: actionsOf(message),
   attachments: attachmentsOf(message),
