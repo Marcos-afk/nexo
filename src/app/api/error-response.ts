@@ -1,10 +1,19 @@
 import {
   AnalystRequiredError,
   ConversationClosedError,
+  ConversationNotFoundError,
+  DraftModeChangeError,
+  DraftNotFoundError,
+  DraftNotPendingError,
+  DraftPayloadInvalidError,
+  LegacyUnavailableError,
   MissingEmployeeContextError,
   ModelRateLimitedError,
   ModelUnavailableError,
   SessionMessageLimitReachedError,
+  TicketClosedError,
+  TicketNotFoundError,
+  TicketNotReopenableError,
   TriageOutputInvalidError,
   UnauthenticatedError,
   UnknownEmployeeError,
@@ -12,8 +21,10 @@ import {
 
 const HTTP_UNAUTHORIZED = 401;
 const HTTP_FORBIDDEN = 403;
+const HTTP_NOT_FOUND = 404;
 const HTTP_CONFLICT = 409;
 const HTTP_TOO_MANY_REQUESTS = 429;
+const HTTP_UNPROCESSABLE = 422;
 const HTTP_BAD_GATEWAY = 502;
 const HTTP_SERVICE_UNAVAILABLE = 503;
 const RETRY_AFTER_HEADER = "Retry-After";
@@ -35,6 +46,15 @@ const errorMappings = new Map<new (...args: never[]) => Error, ErrorMapping>([
   [ConversationClosedError, { status: HTTP_CONFLICT, code: "conversation_closed" }],
   [UnauthenticatedError, { status: HTTP_UNAUTHORIZED, code: "unauthenticated" }],
   [AnalystRequiredError, { status: HTTP_FORBIDDEN, code: "analyst_required" }],
+  [DraftNotFoundError, { status: HTTP_NOT_FOUND, code: "draft_not_found" }],
+  [DraftNotPendingError, { status: HTTP_CONFLICT, code: "draft_not_pending" }],
+  [DraftPayloadInvalidError, { status: HTTP_UNPROCESSABLE, code: "draft_payload_invalid" }],
+  [DraftModeChangeError, { status: HTTP_UNPROCESSABLE, code: "draft_mode_change" }],
+  [TicketNotFoundError, { status: HTTP_NOT_FOUND, code: "ticket_not_found" }],
+  [TicketClosedError, { status: HTTP_CONFLICT, code: "ticket_closed" }],
+  [TicketNotReopenableError, { status: HTTP_CONFLICT, code: "ticket_not_reopenable" }],
+  [ConversationNotFoundError, { status: HTTP_NOT_FOUND, code: "conversation_not_found" }],
+  [LegacyUnavailableError, { status: HTTP_SERVICE_UNAVAILABLE, code: "legacy_unavailable" }],
   [UnknownEmployeeError, { status: HTTP_UNAUTHORIZED, code: "unknown_employee" }],
 ]);
 

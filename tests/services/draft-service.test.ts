@@ -4,6 +4,7 @@ import { drafts, tickets } from "../../src/db/schema";
 import type { DraftInput } from "../../src/domain/draft";
 import {
   ConversationNotFoundError,
+  DraftModeChangeError,
   DraftNotFoundError,
   DraftNotPendingError,
   DraftPayloadInvalidError,
@@ -189,5 +190,117 @@ describe("cancel", () => {
     expect(cancelled.status).toBe("cancelled");
     expect(created).toEqual([]);
     expect(await service.getPending(ANA, ANA_CHAT)).toBeNull();
+  });
+});
+
+describe("get", () => {
+  it("reads the seeded draft with its parsed content and no target", async () => {
+    const { service } = await createService();
+    const details = await service.get(ANA, SEEDED_DRAFT);
+
+    expect(details.draft.status).toBe("pending");
+    expect(details.stored).toMatchObject({
+      mode: "create",
+      payload: { title: monitorTicket.title },
+    });
+    expect(details.targetTicketNumber).toBeNull();
+  });
+
+  it("names the target ticket of an update draft", async () => {
+    const { service } = await createService();
+    const proposed = await service.propose(ANA, ANA_CHAT, {
+      mode: "update",
+      ticketNumber: "INC-20298",
+      note: "Falha no Teams",
+    });
+
+    expect((await service.get(ANA, proposed.id)).targetTicketNumber).toBe("INC-20298");
+  });
+
+  it("does not expose the draft of another employee", async () => {
+    const { service } = await createService();
+
+    await expect(service.get(CARLA, SEEDED_DRAFT)).rejects.toBeInstanceOf(DraftNotFoundError);
+  });
+});
+
+describe("edit", () => {
+  it("changes the content of a pending draft and confirming uses the edited data", async () => {
+    const { service } = await createService();
+    const edited = await service.edit(ANA, SEEDED_DRAFT, {
+      mode: "create",
+      ticket: {
+        ...monitorTicket,
+        title: "Monitor sem imagem após a troca do cabo",
+        priority: "medium",
+      },
+    });
+    const { ticket } = await service.confirm(ANA, SEEDED_DRAFT);
+
+    expect(edited.draft).toMatchObject({ id: SEEDED_DRAFT, status: "pending" });
+    expect(edited.stored).toMatchObject({ payload: { priority: "medium" } });
+    expect(ticket).toMatchObject({
+      title: "Monitor sem imagem após a troca do cabo",
+      priority: "medium",
+    });
+  });
+
+  it("moves an update draft to another ticket of the same employee", async () => {
+    const { service } = await createService();
+    const proposed = await service.propose(ANA, ANA_CHAT, {
+      mode: "update",
+      ticketNumber: "INC-20298",
+      note: "Falha no Teams",
+    });
+    const edited = await service.edit(ANA, proposed.id, {
+      mode: "update",
+      ticketNumber: "INC-20311",
+      note: "Piorou depois da atualização",
+    });
+
+    expect(edited.targetTicketNumber).toBe("INC-20311");
+    expect(edited.stored).toMatchObject({ payload: { note: "Piorou depois da atualização" } });
+  });
+
+  it.each(["confirm", "cancel"] as const)(
+    "refuses to edit a draft already %sed",
+    async (action) => {
+      const { service } = await createService();
+      await service[action](ANA, SEEDED_DRAFT);
+
+      await expect(
+        service.edit(ANA, SEEDED_DRAFT, { mode: "create", ticket: monitorTicket }),
+      ).rejects.toBeInstanceOf(DraftNotPendingError);
+    },
+  );
+
+  it("refuses to change the kind of the draft", async () => {
+    const { service } = await createService();
+
+    await expect(
+      service.edit(ANA, SEEDED_DRAFT, { mode: "reopen", ticketNumber: "INC-19877" }),
+    ).rejects.toBeInstanceOf(DraftModeChangeError);
+  });
+
+  it("refuses a target ticket of someone else and leaves the draft unchanged", async () => {
+    const { service } = await createService();
+    const proposed = await service.propose(ANA, ANA_CHAT, {
+      mode: "update",
+      ticketNumber: "INC-20298",
+      note: "Falha no Teams",
+    });
+
+    await expect(
+      service.edit(ANA, proposed.id, { mode: "update", ticketNumber: "INC-20150", note: "x" }),
+    ).rejects.toBeInstanceOf(TicketNotFoundError);
+    expect((await service.get(ANA, proposed.id)).targetTicketNumber).toBe("INC-20298");
+  });
+
+  it("does not let another employee edit the draft", async () => {
+    const { service } = await createService();
+
+    await expect(
+      service.edit(CARLA, SEEDED_DRAFT, { mode: "create", ticket: monitorTicket }),
+    ).rejects.toBeInstanceOf(DraftNotFoundError);
   });
 });
