@@ -1,6 +1,6 @@
 import { StreamErrorRetryProcessor } from "@mastra/core/processors";
 
-export const MODEL_STEP_TIMEOUT_MS = 20_000;
+export const MODEL_STEP_TIMEOUT_MS = 30_000;
 export const MODEL_TOTAL_TIMEOUT_MS = 60_000;
 export const MODEL_MAX_RETRIES = 0;
 

@@ -15,6 +15,7 @@ import { createSequentialIds } from "../support/ids";
 const NOW = "2026-10-28T10:00:00-03:00";
 const ANA = "emp-ana";
 const ANA_CHAT = "c-ana-chat";
+const LOCAL_DATE_TIME = /^\d{2}\/\d{2}\/\d{4} às \d{2}:\d{2}$/;
 
 const createTools = async () => {
   const database = await createSeededDatabase();
@@ -62,6 +63,30 @@ const numbersOf = (result: Record<string, unknown>, key = "tickets"): string[] =
   (result[key] as readonly { number: string }[]).map((ticket) => ticket.number);
 
 describe("listMyTickets", () => {
+  it.each([
+    { number: "INC-20311", status: "Aguardando analista" },
+    { number: "INC-20298", status: "Em andamento" },
+    { number: "REQ-10442", status: "Aprovado" },
+    { number: "INC-19877", status: "Resolvido" },
+  ])("says $number is '$status' in Portuguese", async ({ number, status }) => {
+    const { tools } = await createTools();
+    const result = await invoke(tools.listMyTickets, { scope: "all" });
+    const found = (result.tickets as readonly { number: string; status: string }[]).find(
+      (ticket) => ticket.number === number,
+    );
+
+    expect(found?.status).toBe(status);
+  });
+
+  it("gives every date in Brasília time, never as ISO", async () => {
+    const { tools } = await createTools();
+    const result = await invoke(tools.listMyTickets, { scope: "all" });
+    const [first] = result.tickets as readonly { dueAt: string; updatedAt: string }[];
+
+    expect(first?.dueAt).toMatch(LOCAL_DATE_TIME);
+    expect(first?.updatedAt).toMatch(LOCAL_DATE_TIME);
+  });
+
   it.each([
     { scope: "unresolved", expected: ["INC-20311", "INC-20298", "REQ-10442"] },
     { scope: "resolved", expected: ["INC-19877", "INC-19410"] },
@@ -197,7 +222,7 @@ describe("buildDraft", () => {
     const result = await invoke(tools.buildDraft, validCreate);
 
     expect(result).toMatchObject({ mode: "create", status: "pending" });
-    expect(typeof result.dueAt).toBe("string");
+    expect(result.dueAt).toMatch(LOCAL_DATE_TIME);
     expect(await tickets.list(ANA)).toHaveLength(before.length);
   });
 
@@ -233,7 +258,7 @@ describe("requestHandoff", () => {
     });
 
     expect(result.mode).toBe("awaiting_analyst");
-    expect(typeof result.contactDueAt).toBe("string");
+    expect(result.contactDueAt).toMatch(LOCAL_DATE_TIME);
   });
 
   it("returns a failure when the conversation is no longer with the agent", async () => {

@@ -160,7 +160,7 @@ describe("scenarios 4 and 20: ticket listing", () => {
     const listed = ticketsOf(toolOutputsOf(message, "listMyTickets")[0]);
 
     expect(listed.length).toBeGreaterThanOrEqual(2);
-    expect(listed.map((ticket) => ticket.status)).not.toContain("resolved");
+    expect(listed.map((ticket) => ticket.status)).not.toContain("Resolvido");
   });
 
   it("never lists tickets of other employees, whatever the message says (20)", async () => {

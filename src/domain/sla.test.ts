@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeDueAt, isOverdue, type TicketPriority } from "./sla";
+import { computeDueAt, formatOfficeDateTime, isOverdue, type TicketPriority } from "./sla";
 
 interface DueAtCase {
   readonly name: string;
@@ -134,5 +134,23 @@ const overdueCases: readonly OverdueCase[] = [
 describe("isOverdue", () => {
   it.each(overdueCases)("$name", ({ dueAt, now, expected }) => {
     expect(isOverdue(new Date(dueAt), new Date(now))).toBe(expected);
+  });
+});
+
+describe("formatOfficeDateTime", () => {
+  it.each([
+    { name: "an afternoon time", utc: "2026-10-28T20:00:00Z", expected: "28/10/2026 às 17:00" },
+    {
+      name: "a time that falls on the previous day",
+      utc: "2026-11-01T02:30:00Z",
+      expected: "31/10/2026 às 23:30",
+    },
+    {
+      name: "a single-digit day and minute",
+      utc: "2026-01-05T11:05:00Z",
+      expected: "05/01/2026 às 08:05",
+    },
+  ])("formats $name in Brasília time", ({ utc, expected }) => {
+    expect(formatOfficeDateTime(new Date(utc))).toBe(expected);
   });
 });
