@@ -1,5 +1,6 @@
 import type { ConversationMode } from "../domain/conversation";
-import type { HandoffInput } from "../domain/handoff";
+import type { AnalystLevel } from "../domain/employee";
+import type { HandoffRequest } from "../domain/handoff";
 import type { HandoffUrgency } from "../domain/sla";
 import { isTicketOverdue } from "../domain/ticket-rules";
 import type { Triage } from "../domain/triage";
@@ -64,8 +65,15 @@ const hasOverdueTicket = async (
   return owned.some((ticket) => isTicketOverdue(ticket, clock.now()));
 };
 
-const buildHandoffInput = (reason: PolicyHandoffReason, input: TurnInput): HandoffInput => ({
+const handoffLevel = {
+  employee_request: "N1",
+  critical_incident: "N2",
+  low_confidence: "N2",
+} as const satisfies Record<PolicyHandoffReason, AnalystLevel>;
+
+const buildHandoffInput = (reason: PolicyHandoffReason, input: TurnInput): HandoffRequest => ({
   reason: handoffReasonText[reason],
+  level: handoffLevel[reason],
   summary: `${input.triage.understood}\nÚltima mensagem do funcionário: "${input.text}"`,
   urgency: handoffUrgency[reason],
 });

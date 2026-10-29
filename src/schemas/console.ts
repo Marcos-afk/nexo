@@ -2,7 +2,8 @@ import { z } from "zod";
 import { analystAvailabilities, consoleFilters } from "@/domain/console";
 import { conversationModes, messageAuthorKinds } from "@/domain/conversation";
 import { analystLevels } from "@/domain/employee";
-import type { ConsoleProps } from "@/models/console";
+import { ticketStatuses } from "@/domain/ticket";
+import type { ConsoleConversationProps, ConsoleProps } from "@/models/console";
 
 const MAX_QUERY_LENGTH = 100;
 
@@ -60,3 +61,44 @@ export const consoleResponseSchema = z.object({
 export const availabilityResponseSchema = z.object({
   availability: z.enum(analystAvailabilities),
 });
+
+const MAX_REPLY_LENGTH = 2000;
+
+export const EMPTY_REPLY_MESSAGE = "Escreva a resposta antes de enviar.";
+export const LONG_REPLY_MESSAGE = `A resposta pode ter até ${MAX_REPLY_LENGTH} caracteres.`;
+
+export const replyBodySchema = z.object({
+  content: z.string().trim().min(1, EMPTY_REPLY_MESSAGE).max(MAX_REPLY_LENGTH, LONG_REPLY_MESSAGE),
+});
+
+export const conversationResponseSchema = z.object({
+  conversation: z.object({
+    id: z.string(),
+    viewerId: z.string(),
+    employee: z.object({ id: z.string(), name: z.string(), department: z.string() }),
+    mode: z.enum(conversationModes),
+    handoffLevel: z.enum(analystLevels).nullable(),
+    contactDueAt: z.string().nullable(),
+    ticket: z
+      .object({ number: z.string(), title: z.string(), status: z.enum(ticketStatuses) })
+      .nullable(),
+    assignedAnalyst: z
+      .object({ id: z.string(), name: z.string(), level: z.enum(analystLevels).nullable() })
+      .nullable(),
+    messages: z.array(
+      z.object({
+        id: z.string(),
+        authorKind: z.enum(messageAuthorKinds),
+        authorName: z.string().nullable(),
+        authorLevel: z.enum(analystLevels).nullable(),
+        content: z.string(),
+        createdAt: z.string(),
+        readByEmployee: z.boolean().nullable(),
+      }),
+    ),
+  }),
+}) satisfies z.ZodType<{ conversation: ConsoleConversationProps }>;
+
+export const actionResponseSchema = z.looseObject({});
+
+export const eventSignalSchema = z.object({ conversationId: z.string() });

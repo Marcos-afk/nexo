@@ -3,14 +3,19 @@ import { describe, expect, it } from "vitest";
 import { conversations } from "../../src/db/schema";
 import { AnalystRequiredError } from "../../src/domain/errors";
 import { createConsoleService } from "../../src/services/console/console-service";
+import { createFixedClock } from "../support/clock";
 import { createSeededDatabase } from "../support/database";
 
 const ANALYST = "analyst-rafael";
+const NOW = "2026-10-29T10:00:00-03:00";
 
 const setup = async () => {
   const database = await createSeededDatabase();
 
-  return { database, service: createConsoleService({ database }) };
+  return {
+    database,
+    service: createConsoleService({ database, clock: createFixedClock(NOW) }),
+  };
 };
 
 describe("console list", () => {

@@ -1,5 +1,6 @@
 import type { AnalystAvailability, ConsoleFilter } from "@/domain/console";
-import type { ConsoleCountsProps } from "@/models/console";
+import type { ConversationMode } from "@/domain/conversation";
+import type { ConsoleCountsProps, ConsoleLabelViewProps } from "@/models/console";
 
 export const CONSOLE_ENDPOINT = "/api/console/conversations";
 export const AVAILABILITY_ENDPOINT = "/api/console/availability";
@@ -41,3 +42,38 @@ export const NEXT_AVAILABILITY = {
   online: "offline",
   offline: "online",
 } as const satisfies Record<AnalystAvailability, AnalystAvailability>;
+
+export const conversationPathOf = (id: string): string => `${CONSOLE_ENDPOINT}/${id}`;
+export const CONVERSATION_LOAD_ERROR = "Não foi possível carregar a conversa agora.";
+export const ACTION_ERROR = "Não foi possível concluir a ação agora.";
+export const REPLY_PLACEHOLDER = "Escreva a resposta ao funcionário";
+export const LOCKED_REPLY_PLACEHOLDER = "Assuma o atendimento para responder";
+export const AGENT_BADGE_LABEL = "IA";
+export const AGENT_AUTHOR_LABEL = "Nexo Assist";
+export const EMPLOYEE_AUTHOR_FALLBACK = "Funcionário";
+export const ASSUME_LABEL = "Assumir atendimento";
+export const RETURN_LABEL = "Devolver ao agent";
+export const CLOSE_LABEL = "Encerrar atendimento";
+export const CONFIRM_CLOSE_LABEL = "Confirmar encerramento";
+export const CANCEL_LABEL = "Cancelar";
+export const OPEN_TICKET_WARNING =
+  "O chamado ainda está aberto. Encerrar a conversa não o resolve.";
+export const ASSUMED_BY_OTHER_LABEL = "Esta conversa está com outro analista.";
+export const AGENT_ACTIVE_LABEL = "O agent está atendendo esta conversa.";
+export const CLOSED_LABEL = "Atendimento encerrado.";
+
+export const MODE_BADGE_LABELS = {
+  agent: "Agent atendendo",
+  awaiting_analyst: "Aguardando atendente",
+  with_analyst: "Em atendimento",
+  closed: "Encerrada",
+} as const satisfies Record<ConversationMode, string>;
+
+export const MODE_BADGE_TONES = {
+  agent: "neutral",
+  awaiting_analyst: "warning",
+  with_analyst: "info",
+  closed: "neutral",
+} as const satisfies Record<ConversationMode, ConsoleLabelViewProps["tone"]>;
+
+export const conversationHrefOf = (id: string): string => `/console/${id}`;
