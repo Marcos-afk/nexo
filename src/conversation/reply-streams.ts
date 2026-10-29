@@ -12,6 +12,7 @@ import { type AgentToolDeps, createAgentTools } from "../mastra/tools/agent";
 import { type ChatTurn, recordAgentReply } from "../services/conversations/chat-turn";
 import type { ConversationServiceDeps } from "../services/conversations/conversation-service";
 import { appendMessage } from "../services/conversations/conversation-service";
+import { extractText, hasReplyContent } from "../services/conversations/history";
 import type { DecisionService } from "../services/decisions/decision-service";
 import type { TriageOutcome } from "./triage-runner";
 import type { TurnPlan } from "./turn-planner";
@@ -36,6 +37,11 @@ interface AnswerContext {
   readonly plan: AnswerPlan;
   readonly startedAt: number;
 }
+
+export const withFallbackText = (reply: UIMessage): UIMessage =>
+  hasReplyContent(reply) && extractText(reply) === ""
+    ? { ...reply, parts: [...reply.parts, { type: "text", text: STREAM_FAILURE_MESSAGE }] }
+    : reply;
 
 const toStreamErrorMessage = (error: unknown): string =>
   classifyModelError(error)?.message ?? STREAM_FAILURE_MESSAGE;
@@ -127,10 +133,16 @@ export const streamAnswer = async (
     originalMessages,
     onError: toStreamErrorMessage,
     execute: ({ writer }) => {
-      writer.merge(toAISdkStream(output, { from: "agent", version: "v7" }));
+      writer.merge(
+        toAISdkStream(output, { from: "agent", version: "v7", onError: toStreamErrorMessage }),
+      );
     },
     onEnd: async ({ responseMessage }) => {
-      const stored = await recordAgentReply(deps.conversations, turn.ref, responseMessage);
+      const stored = await recordAgentReply(
+        deps.conversations,
+        turn.ref,
+        withFallbackText(responseMessage),
+      );
 
       if (stored) {
         await recordAnswerDecision(deps, output, context, stored.id);
