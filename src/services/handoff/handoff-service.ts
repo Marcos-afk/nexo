@@ -48,8 +48,8 @@ export interface QueueOptions {
 const DEFAULT_QUEUE_LIMIT = 50;
 const MAX_QUEUE_LIMIT = 100;
 
-const queueOrder = sql`case when ${conversations.mode} = 'awaiting_analyst' then 0 else 1 end`;
-const oldestFirstWhenWaiting = sql`case when ${conversations.mode} = 'awaiting_analyst' then ${conversations.updatedAt} else -${conversations.updatedAt} end`;
+export const queueOrder = sql`case when ${conversations.mode} = 'awaiting_analyst' then 0 else 1 end`;
+export const oldestFirstWhenWaiting = sql`case when ${conversations.mode} = 'awaiting_analyst' then ${conversations.updatedAt} else -${conversations.updatedAt} end`;
 
 const requireConversation = async (
   executor: Pick<Database, "select">,

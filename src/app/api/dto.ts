@@ -1,9 +1,11 @@
-import type { DraftMode, DraftStatus } from "@/domain/conversation";
+import type { ConsoleLabel } from "@/domain/console";
+import type { DraftMode, DraftStatus, MessageAuthorKind } from "@/domain/conversation";
 import type { StoredDraft } from "@/domain/draft";
 import { computeDueAt, type TicketPriority } from "@/domain/sla";
 import type { Ticket, TicketStatus, TicketType } from "@/domain/ticket";
 import type { CreateTicketInput } from "@/domain/ticket-input";
 import { parseToolTrace, type ToolTraceEntry } from "@/domain/tool-trace";
+import type { ConsoleItem, ConsoleOverview } from "@/services/console/console-service";
 import type { Decision } from "@/services/decisions/decision-service";
 import type { Draft, DraftDetails } from "@/services/drafts/draft-service";
 
@@ -117,4 +119,72 @@ export const toDecisionDto = (decision: Decision): DecisionDto => ({
   tokensIn: decision.tokensIn,
   tokensOut: decision.tokensOut,
   latencyMs: decision.latencyMs,
+});
+
+export type ConsoleLabelDto =
+  | {
+      readonly kind: "transferred";
+      readonly ticketNumber: string | null;
+      readonly contactDueAt: string | null;
+    }
+  | { readonly kind: "agent_asked_help"; readonly confidence: number }
+  | { readonly kind: "agent_active" }
+  | { readonly kind: "resolved_by_agent" }
+  | { readonly kind: "closed" }
+  | { readonly kind: "mine" }
+  | { readonly kind: "with_other"; readonly analystName: string };
+
+export interface ConsoleItemDto {
+  readonly id: string;
+  readonly employee: ConsoleItem["employee"];
+  readonly mode: ConsoleItem["mode"];
+  readonly ticketNumber: string | null;
+  readonly updatedAt: string;
+  readonly preview: {
+    readonly text: string;
+    readonly authorKind: MessageAuthorKind;
+    readonly at: string;
+  } | null;
+  readonly unread: number;
+  readonly label: ConsoleLabelDto;
+}
+
+export interface ConsoleDto {
+  readonly me: ConsoleOverview["me"];
+  readonly items: readonly ConsoleItemDto[];
+  readonly counts: ConsoleOverview["counts"];
+  readonly attention: number;
+}
+
+const toLabelDto = (label: ConsoleLabel): ConsoleLabelDto =>
+  label.kind === "transferred"
+    ? {
+        kind: "transferred",
+        ticketNumber: label.ticketNumber,
+        contactDueAt: label.contactDueAt?.toISOString() ?? null,
+      }
+    : label;
+
+const toConsoleItemDto = (item: ConsoleItem): ConsoleItemDto => ({
+  id: item.id,
+  employee: item.employee,
+  mode: item.mode,
+  ticketNumber: item.ticketNumber,
+  updatedAt: item.updatedAt.toISOString(),
+  preview: item.preview
+    ? {
+        text: item.preview.text,
+        authorKind: item.preview.authorKind,
+        at: item.preview.at.toISOString(),
+      }
+    : null,
+  unread: item.unread,
+  label: toLabelDto(item.label),
+});
+
+export const toConsoleDto = ({ me, items, counts, attention }: ConsoleOverview): ConsoleDto => ({
+  me,
+  items: items.map(toConsoleItemDto),
+  counts,
+  attention,
 });
