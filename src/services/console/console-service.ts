@@ -20,11 +20,13 @@ import {
 import {
   type ConsoleCounts,
   countConversations,
-  lastConfidences,
+  type LastDecision,
+  lastDecisions,
   lastMessages,
   type MessagePreview,
   unreadCounts,
 } from "./console-queries";
+import { getConversationTicket, listConversationTickets } from "./console-tickets";
 
 const DEFAULT_LIST_LIMIT = 50;
 const AWAITING_MODE = "awaiting_analyst";
@@ -116,7 +118,7 @@ interface ItemContext {
   readonly analystId: string;
   readonly previews: ReadonlyMap<string, MessagePreview>;
   readonly unread: ReadonlyMap<string, number>;
-  readonly confidences: ReadonlyMap<string, number>;
+  readonly decisions: ReadonlyMap<string, LastDecision>;
 }
 
 const unreadOf = (row: Row, unread: ReadonlyMap<string, number>): number =>
@@ -145,7 +147,7 @@ const toItem = (row: Row, context: ItemContext): ConsoleItem => {
       handoffReason: conversation.handoffReason,
       ticketNumber: row.ticketNumber,
       contactDueAt: conversation.contactDueAt,
-      lastConfidence: context.confidences.get(conversation.id) ?? null,
+      lastDecision: context.decisions.get(conversation.id) ?? null,
     }),
   };
 };
@@ -181,11 +183,11 @@ export const listConversations = async (
   const analyst = await requireAnalyst(database, analystId);
   const rows = await selectRows(database, analystId, options);
   const ids = rows.map((row) => row.conversation.id);
-  const [counts, previews, unread, confidences] = await Promise.all([
+  const [counts, previews, unread, decisions] = await Promise.all([
     countConversations(database, analystId),
     lastMessages(database, ids),
     unreadCounts(database, ids),
-    lastConfidences(database, idsOf(rows, AWAITING_MODE)),
+    lastDecisions(database, idsOf(rows, AWAITING_MODE)),
   ]);
 
   return {
@@ -195,7 +197,7 @@ export const listConversations = async (
       level: analyst.level,
       availability: analyst.availability === "online" ? "online" : "offline",
     },
-    items: rows.map((row) => toItem(row, { analystId, previews, unread, confidences })),
+    items: rows.map((row) => toItem(row, { analystId, previews, unread, decisions })),
     counts,
     attention: await attentionOf(database, analystId, counts),
   };
@@ -219,6 +221,10 @@ export const createConsoleService = (deps: ConsoleServiceDeps) => ({
     setAvailability(deps, analystId, availability),
   getConversation: (analystId: string, conversationId: string) =>
     getConsoleConversation(deps, analystId, conversationId),
+  listTickets: (analystId: string, conversationId: string) =>
+    listConversationTickets(deps, analystId, conversationId),
+  getTicket: (analystId: string, conversationId: string, number: string) =>
+    getConversationTicket(deps, analystId, conversationId, number),
   markRead: (analystId: string, conversationId: string) =>
     markConversationRead(deps, analystId, conversationId),
 });

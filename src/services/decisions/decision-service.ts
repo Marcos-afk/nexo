@@ -50,7 +50,7 @@ export const recordDecision = async (
 
 export const getDecisionForMessage = async (
   { database }: Pick<DecisionServiceDeps, "database">,
-  ownerId: string,
+  ownerId: string | null,
   messageId: string,
 ): Promise<Decision> => {
   const [row] = await database
@@ -58,7 +58,12 @@ export const getDecisionForMessage = async (
     .from(decisions)
     .innerJoin(messages, eq(decisions.messageId, messages.id))
     .innerJoin(conversations, eq(messages.conversationId, conversations.id))
-    .where(and(eq(decisions.messageId, messageId), eq(conversations.employeeId, ownerId)));
+    .where(
+      and(
+        eq(decisions.messageId, messageId),
+        ownerId === null ? undefined : eq(conversations.employeeId, ownerId),
+      ),
+    );
 
   if (!row) {
     throw new DecisionNotFoundError(messageId);
@@ -71,6 +76,7 @@ export const createDecisionService = (deps: DecisionServiceDeps) => ({
   record: (record: DecisionRecord) => recordDecision(deps, record),
   getForMessage: (ownerId: string, messageId: string) =>
     getDecisionForMessage(deps, ownerId, messageId),
+  getForAnalyst: (messageId: string) => getDecisionForMessage(deps, null, messageId),
 });
 
 export type DecisionService = ReturnType<typeof createDecisionService>;

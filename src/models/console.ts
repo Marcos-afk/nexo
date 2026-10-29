@@ -4,6 +4,9 @@ import type {
   ConsoleItemDto,
   ConsoleLabelDto,
   ConsoleMessageDto,
+  ConsoleTicketDetailDto,
+  ConsoleTicketItemDto,
+  ConversationTicketsDto,
 } from "@/app/api/dto";
 
 export type ConsoleProps = ConsoleDto;
@@ -36,3 +39,12 @@ export interface ConversationActionsProps {
   readonly onClose: () => void;
   readonly onReply: (content: string) => void;
 }
+
+export type ConversationTicketsProps = ConversationTicketsDto;
+export type ConsoleTicketItemProps = ConsoleTicketItemDto;
+export type ConsoleTicketDetailProps = ConsoleTicketDetailDto;
+
+export type TicketsViewType =
+  | { readonly kind: "overview" }
+  | { readonly kind: "all" }
+  | { readonly kind: "detail"; readonly number: string; readonly from: "overview" | "all" };

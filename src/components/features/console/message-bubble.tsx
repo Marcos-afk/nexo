@@ -1,15 +1,39 @@
+import { cx } from "class-variance-authority";
 import { Check, CheckCheck } from "lucide-react";
+import { DecisionPanel } from "@/components/features/chat/decision-panel";
 import { Badge } from "@/components/ui/badge";
 import { AGENT_BADGE_LABEL } from "@/constants/console";
 import type { ConsoleMessageProps } from "@/models/console";
-import { authorLabelOf } from "@/utils/console-conversation";
+import { authorLabelOf, splitByQuery } from "@/utils/console-conversation";
 import { clockTimeOf } from "@/utils/console-format";
 
 const ICON_SIZE = 14;
 
+export const messageElementIdOf = (messageId: string): string => `message-${messageId}`;
+
+interface HighlightedTextProps {
+  readonly text: string;
+  readonly query: string;
+}
+
+function HighlightedText({ text, query }: HighlightedTextProps) {
+  return splitByQuery(text, query).map((segment) =>
+    segment.isMatch ? (
+      <mark key={segment.start} className="rounded-sm bg-warning px-0.5 text-ink">
+        {segment.text}
+      </mark>
+    ) : (
+      segment.text
+    ),
+  );
+}
+
 interface MessageBubbleProps {
   readonly message: ConsoleMessageProps;
   readonly employeeName: string;
+  readonly highlightQuery: string;
+  readonly isActive: boolean;
+  readonly isDecisionOpen: boolean;
 }
 
 interface TicksProps {
@@ -44,12 +68,23 @@ export function SystemLine({ message }: { readonly message: ConsoleMessageProps 
   );
 }
 
-export function MessageBubble({ message, employeeName }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  employeeName,
+  highlightQuery,
+  isActive,
+  isDecisionOpen,
+}: MessageBubbleProps) {
   const isAnalyst = message.authorKind === "analyst";
 
   return (
     <div
-      className={isAnalyst ? "flex flex-col items-end gap-1" : "flex flex-col items-start gap-1"}
+      id={messageElementIdOf(message.id)}
+      className={cx(
+        "flex flex-col gap-1 rounded-xl",
+        isAnalyst ? "items-end" : "items-start",
+        isActive && "bg-warning-soft ring-4 ring-warning-soft",
+      )}
     >
       <span className="flex items-center gap-1.5 text-xs font-semibold text-ink">
         {authorLabelOf(message, employeeName)}
@@ -62,12 +97,15 @@ export function MessageBubble({ message, employeeName }: MessageBubbleProps) {
             : "max-w-130 rounded-xl rounded-tl-sm border border-rule bg-paper px-4 py-2.5 text-sm leading-normal whitespace-pre-wrap text-ink"
         }
       >
-        {message.content}
+        <HighlightedText text={message.content} query={highlightQuery} />
       </div>
       <span className="flex items-center gap-1 text-xs text-ink-3">
         {clockTimeOf(message.createdAt)}
         {message.readByEmployee !== null && <Ticks isRead={message.readByEmployee} />}
       </span>
+      {message.authorKind === "agent" && (
+        <DecisionPanel messageId={message.id} initiallyOpen={isDecisionOpen} />
+      )}
     </div>
   );
 }

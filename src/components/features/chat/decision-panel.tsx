@@ -31,10 +31,11 @@ function DecisionBody({ state }: DecisionBodyProps) {
 
 interface DecisionPanelProps {
   readonly messageId: string;
+  readonly initiallyOpen?: boolean;
 }
 
-export function DecisionPanel({ messageId }: DecisionPanelProps) {
-  const { state, isOpen, toggle } = useDecisionPanel(messageId);
+export function DecisionPanel({ messageId, initiallyOpen = false }: DecisionPanelProps) {
+  const { state, isOpen, toggle } = useDecisionPanel(messageId, initiallyOpen);
   const regionId = `decision-${messageId}`;
 
   return (

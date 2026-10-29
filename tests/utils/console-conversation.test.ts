@@ -2,12 +2,15 @@ import { describe, expect, it } from "vitest";
 import type { ConsoleConversationProps, ConsoleMessageProps } from "../../src/models/console";
 import {
   authorLabelOf,
+  buildCaseSummary,
   dueLabelOf,
   isAssignedToOther,
   isAssignedToViewer,
   lastEmployeeMessageIdOf,
+  matchingMessageIds,
   modeBadgeOf,
   needsCloseConfirmation,
+  splitByQuery,
   toEntries,
 } from "../../src/utils/console-conversation";
 
@@ -17,8 +20,11 @@ const conversation = (overrides: Partial<ConsoleConversationProps>): ConsoleConv
   id: "c-1",
   viewerId: "analyst-rafael",
   employee: { id: "emp-ana", name: "Ana Souza", department: "Financeiro" },
+  employeeOnline: false,
   mode: "awaiting_analyst",
   handoffLevel: "N1",
+  handoffReason: null,
+  handoffSummary: null,
   contactDueAt: null,
   ticket: null,
   assignedAnalyst: null,
@@ -76,8 +82,16 @@ describe("assignment", () => {
 describe("needsCloseConfirmation", () => {
   it.each([
     ["no ticket", null, false],
-    ["an open ticket", { number: "INC-1", title: "x", status: "in_progress" }, true],
-    ["a resolved ticket", { number: "INC-1", title: "x", status: "resolved" }, false],
+    [
+      "an open ticket",
+      { number: "INC-1", title: "x", status: "in_progress", priority: "medium" },
+      true,
+    ],
+    [
+      "a resolved ticket",
+      { number: "INC-1", title: "x", status: "resolved", priority: "medium" },
+      false,
+    ],
   ] as const)("is decided by %s", (_name, ticket, expected) => {
     expect(needsCloseConfirmation(conversation({ ticket }))).toBe(expected);
   });
@@ -137,5 +151,84 @@ describe("toEntries", () => {
       "message",
       "message",
     ]);
+  });
+});
+
+describe("buildCaseSummary", () => {
+  it("lists the employee, the ticket, the destination, the reason and the summary", () => {
+    const text = buildCaseSummary(
+      conversation({
+        ticket: {
+          number: "INC-20311",
+          title: "Notebook lento",
+          status: "in_progress",
+          priority: "medium",
+        },
+        handoffReason: "Pedido do funcionário",
+        handoffSummary: "O agent sugeriu reiniciar.",
+      }),
+    );
+
+    expect(text.split("\n")).toEqual([
+      "Caso de Ana Souza (Financeiro)",
+      "Chamado: INC-20311 · Notebook lento",
+      "Transferido para: Suporte N1",
+      "Motivo: Pedido do funcionário",
+      "O agent sugeriu reiniciar.",
+    ]);
+  });
+
+  it("leaves out what the conversation does not have", () => {
+    expect(buildCaseSummary(conversation({ handoffLevel: null }))).toBe(
+      "Caso de Ana Souza (Financeiro)",
+    );
+  });
+});
+
+describe("splitByQuery", () => {
+  it.each([
+    ["no query", "Notebook lento", "", [["Notebook lento", false]]],
+    ["no match", "Notebook lento", "vpn", [["Notebook lento", false]]],
+    [
+      "a match ignoring case and accents",
+      "Atualização do NOTEBOOK",
+      "atualizacao",
+      [
+        ["Atualização", true],
+        [" do NOTEBOOK", false],
+      ],
+    ],
+    [
+      "several matches",
+      "senha, senha e senha",
+      "senha",
+      [
+        ["senha", true],
+        [", ", false],
+        ["senha", true],
+        [" e ", false],
+        ["senha", true],
+      ],
+    ],
+  ])("splits the text for %s", (_name, text, query, expected) => {
+    expect(splitByQuery(text, query).map((segment) => [segment.text, segment.isMatch])).toEqual(
+      expected,
+    );
+  });
+});
+
+describe("matchingMessageIds", () => {
+  const messages = [
+    message({ id: "m-1", content: "Meu notebook está lento" }),
+    message({ id: "m-2", authorKind: "system", content: "Notebook transferido" }),
+    message({ id: "m-3", authorKind: "agent", content: "Reinicie o NOTEBOOK" }),
+  ];
+
+  it("lists the messages that have the text, in order, leaving out the system lines", () => {
+    expect(matchingMessageIds(messages, "notebook")).toEqual(["m-1", "m-3"]);
+  });
+
+  it("finds nothing for an empty query", () => {
+    expect(matchingMessageIds(messages, "  ")).toEqual([]);
   });
 });
