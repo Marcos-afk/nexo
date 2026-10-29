@@ -7,4 +7,5 @@ export const DEFAULT_LOGIN_VALUES: LoginFormValues = {
 };
 
 export const LOGIN_ENDPOINT = "/api/auth/login";
+export const FORGOT_PASSWORD_ENDPOINT = "/api/auth/forgot-password";
 export const LOGOUT_ENDPOINT = "/api/auth/logout";
