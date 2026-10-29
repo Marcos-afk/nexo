@@ -19,7 +19,6 @@ export type PolicyHandoffReason = "employee_request" | "critical_incident" | "lo
 export interface PolicyFacts {
   readonly mode: ConversationMode;
   readonly triage: Triage;
-  readonly isCriticalIncident: boolean;
   readonly hasOverdueTicket: boolean;
 }
 
@@ -46,19 +45,19 @@ const toolsByIntent = {
 const asksForAnalyst = ({ intent, signals }: Triage): boolean =>
   intent === "human_request" || signals.includes("asks_for_human");
 
+const isCriticalIncident = ({ signals }: Triage): boolean => signals.includes("critical_impact");
+
 const isLowConfidence = ({ confidence }: Triage): boolean =>
   confidence < CONFIDENCE_HANDOFF_THRESHOLD;
 
 const handoff = (reason: PolicyHandoffReason): TurnDecision => ({ kind: "handoff", reason });
 
+export const actionLabelOf = (decision: TurnDecision): string =>
+  decision.kind === "handoff" ? `${decision.kind}:${decision.reason}` : decision.kind;
+
 export const shouldInvokeAgent = (mode: ConversationMode): boolean => mode === "agent";
 
-export const decideTurn = ({
-  mode,
-  triage,
-  isCriticalIncident,
-  hasOverdueTicket,
-}: PolicyFacts): TurnDecision => {
+export const decideTurn = ({ mode, triage, hasOverdueTicket }: PolicyFacts): TurnDecision => {
   if (!shouldInvokeAgent(mode)) {
     return { kind: "skip_agent" };
   }
@@ -67,7 +66,7 @@ export const decideTurn = ({
     return handoff("employee_request");
   }
 
-  if (isCriticalIncident) {
+  if (isCriticalIncident(triage)) {
     return handoff("critical_incident");
   }
 
