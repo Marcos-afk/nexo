@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   EMPTY_EMAIL_MESSAGE,
   EMPTY_PASSWORD_MESSAGE,
+  forgotPasswordResponseSchema,
+  forgotPasswordSchema,
   INVALID_EMAIL_MESSAGE,
   loginSchema,
 } from "../../src/schemas/auth";
@@ -52,5 +54,35 @@ describe("loginSchema", () => {
     expect(
       loginSchema.parse({ email: " ana@nexo.test ", password: "x", remember: true }).email,
     ).toBe("ana@nexo.test");
+  });
+});
+
+describe("forgotPasswordSchema", () => {
+  it.each([
+    { name: "empty", email: "", expected: EMPTY_EMAIL_MESSAGE },
+    { name: "only spaces", email: "   ", expected: EMPTY_EMAIL_MESSAGE },
+    { name: "without at sign", email: "ana.nexo.com", expected: INVALID_EMAIL_MESSAGE },
+    { name: "valid", email: "ana@nexo.test", expected: undefined },
+    { name: "valid with surrounding spaces", email: " ana@nexo.test ", expected: undefined },
+  ])("e-mail $name", ({ email, expected }) => {
+    const result = forgotPasswordSchema.safeParse({ email });
+
+    expect(result.success ? undefined : result.error.issues[0]?.message).toBe(expected);
+  });
+
+  it("trims the e-mail in the parsed output", () => {
+    expect(forgotPasswordSchema.parse({ email: " ana@nexo.test " })).toEqual({
+      email: "ana@nexo.test",
+    });
+  });
+});
+
+describe("forgotPasswordResponseSchema", () => {
+  it.each([
+    { name: "a requested answer", payload: { requested: true }, valid: true },
+    { name: "a false answer", payload: { requested: false }, valid: false },
+    { name: "an empty answer", payload: {}, valid: false },
+  ])("$name", ({ payload, valid }) => {
+    expect(forgotPasswordResponseSchema.safeParse(payload).success).toBe(valid);
   });
 });

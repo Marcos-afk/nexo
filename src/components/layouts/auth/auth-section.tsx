@@ -1,4 +1,6 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
+import { PRIVACY_PATH } from "@/constants/routes";
 
 interface AuthSectionProps {
   readonly children: ReactNode;
@@ -12,7 +14,12 @@ export function AuthSection({ children }: AuthSectionProps) {
         <span className="font-semibold text-primary-text">Ligue no ramal 4000</span>
       </p>
       <div className="flex justify-center">{children}</div>
-      <p className="text-xs text-ink-3">© 2026 Nexo · Service desk de TI</p>
+      <p className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-3">
+        <span>© 2026 Nexo · Service desk de TI</span>
+        <Link href={PRIVACY_PATH} className="font-medium hover:text-ink">
+          Privacidade e uso de dados
+        </Link>
+      </p>
     </section>
   );
 }
