@@ -20,6 +20,8 @@ interface ConversationSeed {
 }
 
 const MS_PER_MINUTE = 60_000;
+const MS_PER_SECOND = 1000;
+const AGENT_REPLY_SECONDS = 8;
 const SEED_MODEL = "google/gemini-3.6-flash";
 const SEED_TRIAGE_MODEL = "google/gemini-3.5-flash-lite";
 
@@ -141,18 +143,26 @@ const toConversation = (seed: ConversationSeed): NewConversation => ({
   updatedAt: new Date(seed.updatedAt),
 });
 
-const toMessages = (seed: ConversationSeed): readonly NewMessage[] =>
-  seed.lines.map(([author, content], index) => ({
+const gapBefore = (author: ConversationSeed["lines"][number][0]): number =>
+  author === "agent" ? AGENT_REPLY_SECONDS * MS_PER_SECOND : MS_PER_MINUTE;
+
+const toMessages = (seed: ConversationSeed): readonly NewMessage[] => {
+  const startMs = new Date(seed.createdAt).getTime();
+  const offsetOf = (index: number): number =>
+    seed.lines.slice(1, index + 1).reduce((total, [author]) => total + gapBefore(author), 0);
+
+  return seed.lines.map(([author, content], index) => ({
     id: `m-${seed.id}-${index + 1}`,
     conversationId: seed.id,
     authorKind: author,
     authorId: author === "employee" ? seed.employeeId : null,
     content,
     parts: null,
-    createdAt: new Date(new Date(seed.createdAt).getTime() + index * MS_PER_MINUTE),
+    createdAt: new Date(startMs + offsetOf(index)),
     deliveredAt: null,
     readAt: null,
   }));
+};
 
 export const seedConversations: readonly NewConversation[] = conversationSeeds.map(toConversation);
 export const seedMessages: readonly NewMessage[] = conversationSeeds.flatMap(toMessages);
