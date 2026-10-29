@@ -98,6 +98,8 @@ export const conversations = sqliteTable(
     assignedAnalystId: text("assigned_analyst_id").references(() => employees.id),
     handoffReason: text("handoff_reason"),
     handoffSummary: text("handoff_summary"),
+    handoffLevel: text("handoff_level", { enum: analystLevels }),
+    analystReadAt: timestamp("analyst_read_at"),
     contactDueAt: timestamp("contact_due_at"),
     ticketId: text("ticket_id").references(() => tickets.id),
     createdAt: timestamp("created_at").notNull(),

@@ -1,5 +1,6 @@
 import {
   AnalystRequiredError,
+  ConversationAssignedToOtherError,
   ConversationClosedError,
   ConversationNotFoundError,
   DecisionNotFoundError,
@@ -7,6 +8,7 @@ import {
   DraftNotFoundError,
   DraftNotPendingError,
   DraftPayloadInvalidError,
+  InvalidConversationTransitionError,
   LegacyUnavailableError,
   MissingEmployeeContextError,
   ModelRateLimitedError,
@@ -56,6 +58,14 @@ const errorMappings = new Map<new (...args: never[]) => Error, ErrorMapping>([
   [TicketNotReopenableError, { status: HTTP_CONFLICT, code: "ticket_not_reopenable" }],
   [ConversationNotFoundError, { status: HTTP_NOT_FOUND, code: "conversation_not_found" }],
   [DecisionNotFoundError, { status: HTTP_NOT_FOUND, code: "decision_not_found" }],
+  [
+    ConversationAssignedToOtherError,
+    { status: HTTP_CONFLICT, code: "conversation_assigned_to_other" },
+  ],
+  [
+    InvalidConversationTransitionError,
+    { status: HTTP_CONFLICT, code: "invalid_conversation_transition" },
+  ],
   [LegacyUnavailableError, { status: HTTP_SERVICE_UNAVAILABLE, code: "legacy_unavailable" }],
   [UnknownEmployeeError, { status: HTTP_UNAUTHORIZED, code: "unknown_employee" }],
 ]);

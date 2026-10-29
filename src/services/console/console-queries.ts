@@ -87,7 +87,7 @@ export const unreadCounts = async (
         eq(messages.authorKind, "employee"),
         gt(
           messages.createdAt,
-          sql`coalesce((select max(m.created_at) from messages m where m.conversation_id = ${messages.conversationId} and m.author_kind <> 'employee'), 0)`,
+          sql`max(coalesce((select max(m.created_at) from messages m where m.conversation_id = ${messages.conversationId} and m.author_kind <> 'employee'), 0), coalesce((select c.analyst_read_at from conversations c where c.id = ${messages.conversationId}), 0))`,
         ),
       ),
     )

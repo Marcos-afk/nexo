@@ -76,6 +76,8 @@ export const startConversation = async (
     assignedAnalystId: null,
     handoffReason: null,
     handoffSummary: null,
+    handoffLevel: null,
+    analystReadAt: null,
     contactDueAt: null,
     ticketId: null,
     createdAt: now,

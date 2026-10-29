@@ -66,12 +66,12 @@ describe("seed", () => {
     expect([...modes].sort()).toEqual(["agent", "awaiting_analyst", "closed"]);
   });
 
-  it("seeds one analyst, between 5 and 10 articles and the VPN article", async () => {
+  it("seeds two analysts, between 5 and 10 articles and the VPN article", async () => {
     const database = await createSeededDatabase();
     const analysts = await database.select().from(employees).where(eq(employees.role, "analyst"));
     const articles = await database.select().from(helpArticles);
 
-    expect(analysts.map((analyst) => analyst.level)).toEqual(["N2"]);
+    expect(analysts.map((analyst) => analyst.level)).toEqual(["N2", "N1"]);
     expect(articles.length).toBeGreaterThanOrEqual(5);
     expect(articles.length).toBeLessThanOrEqual(10);
     expect(articles.map((article) => article.id)).toContain("kb-vpn-809");

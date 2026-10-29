@@ -13,6 +13,11 @@ import type { AnalystLevel } from "../../domain/employee";
 import { requireAnalyst } from "../analysts/require-analyst";
 import { oldestFirstWhenWaiting, queueOrder } from "../handoff/handoff-service";
 import {
+  type ConsoleConversationDeps,
+  getConsoleConversation,
+  markConversationRead,
+} from "./console-conversation";
+import {
   type ConsoleCounts,
   countConversations,
   lastConfidences,
@@ -25,9 +30,7 @@ const DEFAULT_LIST_LIMIT = 50;
 const AWAITING_MODE = "awaiting_analyst";
 const WITH_ANALYST_MODE = "with_analyst";
 
-export interface ConsoleServiceDeps {
-  readonly database: Database;
-}
+export type ConsoleServiceDeps = ConsoleConversationDeps;
 
 export interface ConsoleListOptions {
   readonly filter?: ConsoleFilter;
@@ -214,6 +217,10 @@ export const createConsoleService = (deps: ConsoleServiceDeps) => ({
     listConversations(deps, analystId, options),
   setAvailability: (analystId: string, availability: AnalystAvailability) =>
     setAvailability(deps, analystId, availability),
+  getConversation: (analystId: string, conversationId: string) =>
+    getConsoleConversation(deps, analystId, conversationId),
+  markRead: (analystId: string, conversationId: string) =>
+    markConversationRead(deps, analystId, conversationId),
 });
 
 export type ConsoleService = ReturnType<typeof createConsoleService>;
