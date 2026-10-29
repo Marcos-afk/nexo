@@ -5,6 +5,7 @@ import {
   handleChatMessage,
 } from "../../src/conversation/chat-orchestrator";
 import { ModelUnavailableError } from "../../src/domain/errors";
+import { createModelChain } from "../../src/mastra/models";
 import { createConversationService } from "../../src/services/conversations/conversation-service";
 import { createChatDeps } from "../support/chat-deps";
 import { agentMessagesOf, decisionOf, sendAs } from "../support/chat-flow";
@@ -34,7 +35,11 @@ const humanRequestTriage = triageOf({ intent: "human_request", signals: ["asks_f
 
 describe("handleChatMessage", () => {
   it("answers with the support model and records the decision with summed tokens", async () => {
-    const support = createMockStreamModel("Reinicie o cliente VPN.", { input: 100, output: 20 });
+    const support = createMockStreamModel(
+      "Reinicie o cliente VPN.",
+      { input: 100, output: 20 },
+      "gemini-3.6-flash",
+    );
     const triage = createMockObjectModel(triageOf({}), { input: 30, output: 10 });
     const deps = await createChatDeps({ triage: triage.model, support: support.model });
 
@@ -142,6 +147,77 @@ describe("handleChatMessage: support model failure", () => {
     expect(JSON.stringify(outcome)).toContain("limite de uso");
     expect(JSON.stringify(outcome)).not.toContain("example.test");
     expect(JSON.stringify(outcome)).not.toContain("stack");
+    expect(await agentMessages(deps)).toEqual([]);
+  });
+});
+
+const quotaError = () =>
+  new APICallError({
+    message: "quota",
+    url: "https://example.test",
+    requestBodyValues: {},
+    statusCode: 429,
+  });
+
+const unavailableError = () =>
+  new APICallError({
+    message: "high demand",
+    url: "https://example.test",
+    requestBodyValues: {},
+    statusCode: 503,
+  });
+
+describe("handleChatMessage: model rotation", () => {
+  it("answers with the next support model when the first one is out of quota", async () => {
+    const exhausted = createFailingStreamModel(quotaError(), "gemini-3.6-flash");
+    const backup = createMockStreamModel("Resposta do reserva.", undefined, "gemini-3.5-flash");
+    const deps = await createChatDeps({
+      triage: createMockObjectModel(triageOf({})).model,
+      support: createModelChain([exhausted.model, backup.model]),
+    });
+
+    await send(deps, "Meu VPN caiu");
+    const [message] = await agentMessages(deps);
+    const decision = await decisionOf(deps, message?.id);
+
+    expect(message?.content).toBe("Resposta do reserva.");
+    expect(decision?.model).toBe("google/gemini-3.5-flash");
+    expect([exhausted.callCount(), backup.callCount()]).toEqual([1, 1]);
+  });
+
+  it("uses the next triage model when the first one is unavailable", async () => {
+    const down = createFailingModel(unavailableError(), "gemini-3.5-flash-lite");
+    const backup = createMockObjectModel(
+      triageOf({ intent: "out_of_scope", signals: ["non_it_topic"] }),
+      undefined,
+      "gemini-3.1-flash-lite",
+    );
+    const deps = await createChatDeps({ triage: createModelChain([down.model, backup.model]) });
+
+    await send(deps, "Quando cai o meu pagamento?");
+    const [message] = await agentMessages(deps);
+    const decision = await decisionOf(deps, message?.id);
+
+    expect(decision?.model).toBe("google/gemini-3.1-flash-lite");
+    expect([down.callCount(), backup.callCount()]).toEqual([1, 1]);
+  });
+
+  it("reports the quota to the employee once every support model is exhausted", async () => {
+    const first = createFailingStreamModel(quotaError(), "gemini-3.6-flash");
+    const second = createFailingStreamModel(quotaError(), "gemini-3.5-flash");
+    const deps = await createChatDeps({
+      triage: createMockObjectModel(triageOf({})).model,
+      support: createModelChain([first.model, second.model]),
+    });
+    const reply = await handleChatMessage(deps, EMPLOYEE, "Meu VPN caiu");
+    const chunks: unknown[] = [];
+
+    if (reply.kind === "stream") {
+      await reply.stream.pipeTo(new WritableStream({ write: (chunk) => void chunks.push(chunk) }));
+    }
+
+    expect(JSON.stringify(chunks)).toContain("limite de uso");
+    expect([first.callCount(), second.callCount()]).toEqual([1, 1]);
     expect(await agentMessages(deps)).toEqual([]);
   });
 });

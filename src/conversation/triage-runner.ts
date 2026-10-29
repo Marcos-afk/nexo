@@ -6,7 +6,7 @@ import type { Clock } from "../lib/clock";
 import type { createTriageAgent } from "../mastra/agents/triage-agent";
 import { createModelCallOptions } from "../mastra/model-call";
 import { toModelError } from "../mastra/model-errors";
-import { models } from "../mastra/models";
+import { models, respondingModelOf } from "../mastra/models";
 import { extractText } from "../services/conversations/history";
 
 export interface TriageRunnerDeps {
@@ -63,6 +63,6 @@ export const runTriage = async (
     tokensIn: result.usage.inputTokens ?? null,
     tokensOut: result.usage.outputTokens ?? null,
     latencyMs: deps.clock.now().getTime() - startedAt,
-    model: deps.modelId ?? models.triage,
+    model: deps.modelId ?? respondingModelOf(result.response, models.triage),
   };
 };
