@@ -1,4 +1,5 @@
 import type { MastraModelConfig } from "@mastra/core/llm";
+import { simulateReadableStream } from "ai";
 import { MockLanguageModelV4 } from "ai/test";
 
 export interface MockTokenUsage {
@@ -51,4 +52,30 @@ export const createFailingModel = (error: Error): MockModel => {
   });
 
   return { model: toMastraModel(mock), callCount: () => mock.doGenerateCalls.length };
+};
+
+export const createMockStreamModel = (
+  text: string,
+  usage: MockTokenUsage = DEFAULT_USAGE,
+): MockModel => {
+  const textId = "text-1";
+  const mock = new MockLanguageModelV4({
+    doStream: {
+      stream: simulateReadableStream({
+        chunks: [
+          { type: "stream-start", warnings: [] },
+          { type: "text-start", id: textId },
+          { type: "text-delta", id: textId, delta: text },
+          { type: "text-end", id: textId },
+          {
+            type: "finish",
+            finishReason: { unified: "stop", raw: "stop" },
+            usage: buildUsage(usage),
+          },
+        ],
+      }),
+    },
+  });
+
+  return { model: toMastraModel(mock), callCount: () => mock.doStreamCalls.length };
 };
