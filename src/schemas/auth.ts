@@ -21,3 +21,5 @@ export const loginResponseSchema = z.object({
     role: z.enum(employeeRoles),
   }),
 }) satisfies z.ZodType<LoginResponseProps>;
+
+export const logoutResponseSchema = z.void();
