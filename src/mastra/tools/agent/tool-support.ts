@@ -10,9 +10,8 @@ import {
   TicketNotFoundError,
   TicketNotReopenableError,
 } from "../../../domain/errors";
-import { ticketPriorities } from "../../../domain/sla";
-import type { Ticket } from "../../../domain/ticket";
-import { ticketStatuses, ticketTypes } from "../../../domain/ticket";
+import { formatOfficeDateTime, ticketPriorities } from "../../../domain/sla";
+import { type Ticket, ticketStatusLabels, ticketTypes } from "../../../domain/ticket";
 import { isClosed, isReopenable, isTicketOverdue } from "../../../domain/ticket-rules";
 import type { Clock } from "../../../lib/clock";
 import type { DraftService } from "../../../services/drafts/draft-service";
@@ -62,11 +61,13 @@ export const ticketSummarySchema = z.object({
   number: z.string(),
   title: z.string(),
   category: z.string(),
-  status: z.enum(ticketStatuses),
+  status: z
+    .string()
+    .describe("Situação do chamado em português, como deve ser dita ao funcionário"),
   priority: z.enum(ticketPriorities),
-  dueAt: z.string(),
+  dueAt: z.string().describe("Horário de Brasília, já formatado"),
   overdue: z.boolean(),
-  updatedAt: z.string(),
+  updatedAt: z.string().describe("Horário de Brasília, já formatado"),
 });
 
 export const ticketDetailSchema = ticketSummarySchema.extend({
@@ -74,8 +75,8 @@ export const ticketDetailSchema = ticketSummarySchema.extend({
   subcategory: z.string().nullable(),
   description: z.string(),
   affected: z.string().nullable(),
-  createdAt: z.string(),
-  resolvedAt: z.string().nullable(),
+  createdAt: z.string().describe("Horário de Brasília, já formatado"),
+  resolvedAt: z.string().nullable().describe("Horário de Brasília, já formatado"),
   reopenable: z.boolean(),
 });
 
@@ -83,11 +84,11 @@ export const toTicketSummary = (ticket: Ticket, clock: Clock) => ({
   number: ticket.number,
   title: ticket.title,
   category: ticket.category,
-  status: ticket.status,
+  status: ticketStatusLabels[ticket.status],
   priority: ticket.priority,
-  dueAt: ticket.dueAt.toISOString(),
+  dueAt: formatOfficeDateTime(ticket.dueAt),
   overdue: isTicketOverdue(ticket, clock.now()),
-  updatedAt: ticket.updatedAt.toISOString(),
+  updatedAt: formatOfficeDateTime(ticket.updatedAt),
 });
 
 export const toTicketDetail = (ticket: Ticket, clock: Clock) => ({
@@ -96,8 +97,8 @@ export const toTicketDetail = (ticket: Ticket, clock: Clock) => ({
   subcategory: ticket.subcategory,
   description: ticket.description,
   affected: ticket.affected,
-  createdAt: ticket.createdAt.toISOString(),
-  resolvedAt: ticket.resolvedAt?.toISOString() ?? null,
+  createdAt: formatOfficeDateTime(ticket.createdAt),
+  resolvedAt: ticket.resolvedAt ? formatOfficeDateTime(ticket.resolvedAt) : null,
   reopenable:
     isClosed(ticket.status) &&
     ticket.resolvedAt !== null &&
