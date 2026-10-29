@@ -221,3 +221,51 @@ describe("handleChatMessage: model rotation", () => {
     expect(await agentMessages(deps)).toEqual([]);
   });
 });
+
+describe("handleChatMessage: model health", () => {
+  it("marks the model unavailable when triage fails", async () => {
+    const failing = createFailingModel(unavailableError());
+    const deps = await createChatDeps({ triage: failing.model });
+
+    await expect(handleChatMessage(deps, EMPLOYEE, "Meu VPN caiu")).rejects.toBeInstanceOf(
+      ModelUnavailableError,
+    );
+    expect(deps.modelHealth.state()).toBe("unavailable");
+  });
+
+  it("marks the quota as exhausted when every support model is out of quota", async () => {
+    const exhausted = createFailingStreamModel(quotaError(), "gemini-3.6-flash");
+    const deps = await createChatDeps({
+      triage: createMockObjectModel(triageOf({})).model,
+      support: createModelChain([exhausted.model]),
+    });
+
+    await send(deps, "Meu VPN caiu");
+
+    expect(deps.modelHealth.state()).toBe("rate_limited");
+  });
+
+  it("goes back to ok after a turn answered by the support model", async () => {
+    const deps = await createChatDeps({
+      triage: createMockObjectModel(triageOf({})).model,
+      support: createMockStreamModel("Reinicie o cliente VPN.").model,
+    });
+    deps.modelHealth.markFailure(new ModelUnavailableError());
+
+    await send(deps, "Meu VPN caiu");
+
+    expect(deps.modelHealth.state()).toBe("ok");
+  });
+
+  it("goes back to ok after a fixed reply, since triage worked", async () => {
+    const deps = await createChatDeps({
+      triage: createMockObjectModel(triageOf({ intent: "out_of_scope", signals: ["non_it_topic"] }))
+        .model,
+    });
+    deps.modelHealth.markFailure(new ModelUnavailableError());
+
+    await send(deps, "Quantos dias de férias eu tenho?");
+
+    expect(deps.modelHealth.state()).toBe("ok");
+  });
+});

@@ -1,6 +1,8 @@
 import { mkdirSync } from "node:fs";
 import { APP_DB_FILE, DATA_DIR, toLibSqlFileUrl } from "../config/data-paths";
 import type { ChatOrchestratorDeps } from "../conversation/chat-orchestrator";
+import { createHealthReporter, type HealthReporter } from "../conversation/health-report";
+import { createModelHealth } from "../conversation/model-health";
 import { createDatabase, migrateDatabase } from "../db/client";
 import { env } from "../env";
 import { systemClock } from "../lib/clock";
@@ -31,16 +33,19 @@ const createLegacy = () => {
 
   outage.startFor(env.LEGACY_OUTAGE_SECONDS * MS_PER_SECOND);
 
-  return createLegacyGuard({
+  const guard = createLegacyGuard({
     outage,
     logger: createLogger({ level: "info", clock: systemClock, write: stdoutWrite }),
   });
+
+  return { guard, outage };
 };
 
 export interface Container {
   readonly chat: ChatOrchestratorDeps;
   readonly auth: AuthService;
   readonly stats: StatsService;
+  readonly health: HealthReporter;
 }
 
 const createContainer = async (): Promise<Container> => {
@@ -54,12 +59,14 @@ const createContainer = async (): Promise<Container> => {
     clock: systemClock,
     ids: uuidGenerator,
   };
-  const legacy = createLegacy();
+  const { guard: legacy, outage } = createLegacy();
+  const modelHealth = createModelHealth(systemClock);
   const ticketDeps = { ...conversations, legacy };
 
   const chat: ChatOrchestratorDeps = {
     conversations,
     clock: systemClock,
+    modelHealth,
     triageAgent,
     tickets: createTicketService(ticketDeps),
     drafts: createDraftService(ticketDeps),
@@ -72,6 +79,7 @@ const createContainer = async (): Promise<Container> => {
     chat,
     auth: createAuthService(conversations),
     stats: createStatsService({ database, clock: systemClock }),
+    health: createHealthReporter({ modelHealth, ticketSystem: outage, clock: systemClock }),
   };
 };
 
