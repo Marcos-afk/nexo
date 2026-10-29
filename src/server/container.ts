@@ -12,6 +12,7 @@ import { uuidGenerator } from "../lib/ids";
 import { createLogger, type Logger, stdoutWrite } from "../lib/logger";
 import { triageAgent } from "../mastra/agents/triage-agent";
 import { type AuthService, createAuthService } from "../services/auth/auth-service";
+import { type ConsoleService, createConsoleService } from "../services/console/console-service";
 import type { ConversationServiceDeps } from "../services/conversations/conversation-service";
 import { createDecisionService } from "../services/decisions/decision-service";
 import { createDraftService } from "../services/drafts/draft-service";
@@ -45,6 +46,7 @@ export interface Container {
   readonly chat: ChatOrchestratorDeps;
   readonly auth: AuthService;
   readonly stats: StatsService;
+  readonly console: ConsoleService;
   readonly health: HealthReporter;
   readonly events: EventBus<RealtimeEvent>;
 }
@@ -83,6 +85,7 @@ const createContainer = async (): Promise<Container> => {
     chat,
     auth: createAuthService({ ...conversations, logger }),
     stats: createStatsService({ database, clock: systemClock }),
+    console: createConsoleService({ database }),
     health: createHealthReporter({ modelHealth, ticketSystem: outage, clock: systemClock }),
     events,
   };
