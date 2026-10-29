@@ -2,8 +2,9 @@ import { cookies } from "next/headers";
 import { UnauthenticatedError } from "../domain/errors";
 import { isProduction } from "../env";
 import type { AuthService, AuthSession } from "../services/auth/auth-service";
+import { SESSION_COOKIE } from "./session-cookie";
 
-export const SESSION_COOKIE = "nexo_session";
+export { SESSION_COOKIE };
 
 const readSessionId = async (): Promise<string | null> =>
   (await cookies()).get(SESSION_COOKIE)?.value ?? null;
@@ -41,4 +42,10 @@ export const startSessionCookie = async (session: AuthSession): Promise<void> =>
     path: "/",
     ...(session.remember ? { expires: session.expiresAt } : {}),
   });
+};
+
+export const findSession = async (auth: AuthService): Promise<AuthSession | null> => {
+  const sessionId = await readSessionId();
+
+  return sessionId ? auth.resolve(sessionId) : null;
 };
