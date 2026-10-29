@@ -5,6 +5,7 @@ import {
   attachmentsOf,
   countEmployeeMessages,
   toChatLine,
+  withChoiceAnswers,
 } from "../../src/utils/chat-lines";
 
 const message = (overrides: Partial<UIMessage> & Pick<UIMessage, "role">): UIMessage => ({
@@ -239,5 +240,70 @@ describe("attachmentsOf", () => {
     );
 
     expect(line.attachments).toHaveLength(1);
+  });
+});
+
+describe("choices attachments", () => {
+  const choices = toolPart("offerChoices", "output-available", {
+    options: ["Só eu", "Minha equipe", "Toda a empresa", "Não sei"],
+  });
+
+  it("turns offerChoices into chips that start unanswered", () => {
+    const attachments = attachmentsOf(message({ role: "assistant", parts: [choices] }));
+
+    expect(attachments).toEqual([
+      {
+        kind: "choices",
+        key: "call-offerChoices",
+        options: ["Só eu", "Minha equipe", "Toda a empresa", "Não sei"],
+        answer: null,
+      },
+    ]);
+  });
+
+  it.each([
+    {
+      name: "a failure payload",
+      part: toolPart("offerChoices", "output-available", { error: "x" }),
+    },
+    {
+      name: "a single option",
+      part: toolPart("offerChoices", "output-available", { options: ["Sim"] }),
+    },
+    { name: "a tool still running", part: toolPart("offerChoices", "input-available") },
+  ])("shows nothing for $name", ({ part }) => {
+    expect(attachmentsOf(message({ role: "assistant", parts: [part] }))).toEqual([]);
+  });
+
+  const asked = toChatLine(message({ id: "a-1", role: "assistant", parts: [choices] }));
+  const user = (text: string) =>
+    toChatLine(message({ id: `u-${text}`, role: "user", parts: [{ type: "text", text }] }));
+
+  it.each([
+    { name: "no reply yet", following: [], answer: null },
+    { name: "the chip the employee picked", following: [user("Só eu")], answer: "Só eu" },
+    { name: "a free text answer", following: [user("Uns dez colegas")], answer: "Uns dez colegas" },
+  ])("withChoiceAnswers: $name", ({ following, answer }) => {
+    const [line] = withChoiceAnswers([asked, ...following]);
+
+    expect(line?.attachments[0]).toMatchObject({ kind: "choices", answer });
+  });
+
+  it("only answers with the next employee message", () => {
+    const next = toChatLine(message({ id: "a-2", role: "assistant", parts: [choices] }));
+    const lines = withChoiceAnswers([asked, user("Só eu"), next, user("Não sei")]);
+
+    expect(
+      lines.map(
+        (line) =>
+          line.attachments[0] && "answer" in line.attachments[0] && line.attachments[0].answer,
+      ),
+    ).toEqual(["Só eu", undefined, "Não sei", undefined]);
+  });
+
+  it("leaves lines without choices untouched", () => {
+    const plain = toChatLine(message({ role: "assistant" }));
+
+    expect(withChoiceAnswers([plain])[0]).toBe(plain);
   });
 });

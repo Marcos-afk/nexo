@@ -10,6 +10,7 @@ export const agentToolNames = [
   "findSimilarTickets",
   "buildDraft",
   "requestHandoff",
+  "offerChoices",
 ] as const;
 
 export type AgentToolName = (typeof agentToolNames)[number];
@@ -33,9 +34,9 @@ export type TurnDecision =
     };
 
 const toolsByIntent = {
-  how_to: ["searchHelpArticles", "findSimilarTickets"],
-  ticket_lookup: ["listMyTickets", "getTicket"],
-  ticket_create: ["searchHelpArticles", "findSimilarTickets", "buildDraft"],
+  how_to: ["searchHelpArticles", "findSimilarTickets", "offerChoices"],
+  ticket_lookup: ["listMyTickets", "getTicket", "offerChoices"],
+  ticket_create: ["searchHelpArticles", "findSimilarTickets", "buildDraft", "offerChoices"],
   human_request: [],
   out_of_scope: [],
   chitchat: [],
