@@ -1,14 +1,17 @@
 import { StreamErrorRetryProcessor } from "@mastra/core/processors";
 
-export const MODEL_CALL_TIMEOUT_MS = 20_000;
+export const MODEL_STEP_TIMEOUT_MS = 20_000;
+export const MODEL_TOTAL_TIMEOUT_MS = 60_000;
 export const MODEL_MAX_RETRIES = 0;
 
 const MINIMAL_THINKING_LEVEL = "minimal";
 
 export const createModelCallOptions = () =>
   ({
-    abortSignal: AbortSignal.timeout(MODEL_CALL_TIMEOUT_MS),
-    modelSettings: { maxRetries: MODEL_MAX_RETRIES },
+    modelSettings: {
+      maxRetries: MODEL_MAX_RETRIES,
+      timeout: { stepMs: MODEL_STEP_TIMEOUT_MS, totalMs: MODEL_TOTAL_TIMEOUT_MS },
+    },
     providerOptions: {
       google: { thinkingConfig: { thinkingLevel: MINIMAL_THINKING_LEVEL } },
     },

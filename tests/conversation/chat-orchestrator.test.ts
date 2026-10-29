@@ -10,6 +10,7 @@ import { createChatDeps } from "../support/chat-deps";
 import { agentMessagesOf, decisionOf, sendAs } from "../support/chat-flow";
 import {
   createFailingModel,
+  createFailingStreamModel,
   createMockObjectModel,
   createMockStreamModel,
 } from "../support/mock-model";
@@ -103,6 +104,44 @@ describe("handleChatMessage", () => {
     await expect(handleChatMessage(deps, EMPLOYEE, "Meu VPN caiu")).rejects.toBeInstanceOf(
       ModelUnavailableError,
     );
+    expect(await agentMessages(deps)).toEqual([]);
+  });
+});
+
+describe("handleChatMessage: support model failure", () => {
+  it("tells the employee in Portuguese when the support model hits its quota", async () => {
+    const failing = createFailingStreamModel(
+      new APICallError({
+        message: "quota",
+        url: "https://example.test",
+        requestBodyValues: {},
+        statusCode: 429,
+        responseBody: "Please retry in 4h53m26.098059947s.",
+      }),
+    );
+    const deps = await createChatDeps({
+      triage: createMockObjectModel(triageOf({})).model,
+      support: failing.model,
+    });
+
+    const outcome = await handleChatMessage(deps, EMPLOYEE, "Meu VPN caiu").then(
+      async (reply) => {
+        const chunks: unknown[] = [];
+
+        if (reply.kind === "stream") {
+          await reply.stream.pipeTo(
+            new WritableStream({ write: (chunk) => void chunks.push(chunk) }),
+          );
+        }
+
+        return { chunks };
+      },
+      (error: unknown) => ({ error }),
+    );
+
+    expect(JSON.stringify(outcome)).toContain("limite de uso");
+    expect(JSON.stringify(outcome)).not.toContain("example.test");
+    expect(JSON.stringify(outcome)).not.toContain("stack");
     expect(await agentMessages(deps)).toEqual([]);
   });
 });

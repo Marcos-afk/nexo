@@ -29,6 +29,16 @@ describe("classifyModelError: rate limit", () => {
       error: apiError(429, { responseBody: "Please retry in 11.2s." }),
       seconds: 12,
     },
+    {
+      name: "minutes and seconds in the text",
+      error: apiError(429, { responseBody: "Please retry in 2m5.4s." }),
+      seconds: 126,
+    },
+    {
+      name: "hours, minutes and seconds in the text",
+      error: apiError(429, { responseBody: "Please retry in 4h53m26.098059947s." }),
+      seconds: 17607,
+    },
     { name: "nothing to read", error: apiError(429), seconds: null },
   ])("maps a 429 with $name", ({ error, seconds }) => {
     const failure = classifyModelError(error);
@@ -46,6 +56,7 @@ describe("classifyModelError: unavailable", () => {
     { name: "a 408", error: apiError(408) },
     { name: "a timeout", error: named("TimeoutError") },
     { name: "an abort", error: named("AbortError") },
+    { name: "a Mastra step timeout", error: named("MastraTimeoutError") },
   ])("maps $name", ({ error }) => {
     expect(classifyModelError(error)).toBeInstanceOf(ModelUnavailableError);
   });

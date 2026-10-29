@@ -153,3 +153,13 @@ export const createScriptedStreamModel = (
     systemPrompts: () => mock.doStreamCalls.map(systemPromptOf),
   };
 };
+
+export const createFailingStreamModel = (error: Error): MockModel => {
+  const mock = new MockLanguageModelV4({
+    doStream: () => {
+      throw error;
+    },
+  });
+
+  return { model: toMastraModel(mock), callCount: () => mock.doStreamCalls.length };
+};
