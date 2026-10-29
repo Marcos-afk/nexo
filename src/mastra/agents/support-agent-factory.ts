@@ -1,6 +1,7 @@
 import { Agent } from "@mastra/core/agent";
 import type { MastraModelConfig } from "@mastra/core/llm";
 import type { AgentToolName } from "../../domain/turn-policy";
+import { createErrorProcessors, MODEL_MAX_RETRIES } from "../model-call";
 import { models } from "../models";
 import type { AgentTools } from "../tools/agent";
 
@@ -74,4 +75,6 @@ export const createSupportAgent = ({
     instructions: buildSupportInstructions(toolNames, offerAnalyst),
     model,
     tools: selectTools(tools, toolNames),
+    maxRetries: MODEL_MAX_RETRIES,
+    errorProcessors: createErrorProcessors(),
   });

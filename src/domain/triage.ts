@@ -13,6 +13,7 @@ export const triageIntents = [
 export const triageSignals = [
   "asks_for_human",
   "urgent",
+  "critical_impact",
   "ambiguous",
   "missing_details",
   "mentions_ticket_number",

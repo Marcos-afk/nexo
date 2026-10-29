@@ -53,6 +53,13 @@ export class ModelUnavailableError extends Error {
   }
 }
 
+export class TriageOutputInvalidError extends Error {
+  public constructor(options?: ErrorOptions) {
+    super("Não consegui entender a sua mensagem agora. Tente reformulá-la.", options);
+    this.name = "TriageOutputInvalidError";
+  }
+}
+
 export class ArticleConditionsInvalidError extends Error {
   public constructor(
     public readonly articleId: string,

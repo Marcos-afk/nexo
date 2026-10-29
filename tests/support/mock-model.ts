@@ -42,3 +42,13 @@ export const createMockObjectModel = (
   value: unknown,
   usage: MockTokenUsage = DEFAULT_USAGE,
 ): MockModel => createMockTextModel(JSON.stringify(value), usage);
+
+export const createFailingModel = (error: Error): MockModel => {
+  const mock = new MockLanguageModelV4({
+    doGenerate: () => {
+      throw error;
+    },
+  });
+
+  return { model: toMastraModel(mock), callCount: () => mock.doGenerateCalls.length };
+};
