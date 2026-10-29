@@ -1,6 +1,7 @@
 import { toAISdkStream } from "@mastra/ai-sdk";
 import { RequestContext } from "@mastra/core/request-context";
 import { createUIMessageStream, type UIMessage } from "ai";
+import type { ToolTraceEntry } from "../domain/tool-trace";
 import type { Clock } from "../lib/clock";
 import { createSupportAgent } from "../mastra/agents/support-agent-factory";
 import { createModelCallOptions } from "../mastra/model-call";
@@ -14,6 +15,7 @@ import { appendMessage } from "../services/conversations/conversation-service";
 import { extractText, hasReplyContent } from "../services/conversations/history";
 import type { DecisionService } from "../services/decisions/decision-service";
 import { type ModelHealth, observeModel } from "./model-health";
+import { buildToolTrace, createToolTimer, withToolTiming } from "./tool-trace";
 import type { TriageOutcome } from "./triage-runner";
 import type { TurnPlan } from "./turn-planner";
 
@@ -112,19 +114,16 @@ const recordAnswerDecision = async (
   output: Awaited<ReturnType<ReturnType<typeof createSupportAgent>["stream"]>>,
   context: AnswerContext,
   messageId: string,
+  toolCalls: readonly ToolTraceEntry[],
 ): Promise<void> => {
-  const [usage, toolCalls, response] = await Promise.all([
-    output.usage,
-    output.toolCalls,
-    output.response,
-  ]);
+  const [usage, response] = await Promise.all([output.usage, output.response]);
   const { triage, plan, startedAt } = context;
 
   await deps.decisions.record({
     messageId,
     triage: triage.triage,
     action: plan.action,
-    toolCalls: toolCalls.map(({ payload }) => ({ name: payload.toolName, args: payload.args })),
+    toolCalls,
     tokensIn: sumTokens(triage.tokensIn, usage.inputTokens),
     tokensOut: sumTokens(triage.tokensOut, usage.outputTokens),
     latencyMs: triage.latencyMs + (deps.clock.now().getTime() - startedAt),
@@ -160,12 +159,19 @@ export const streamAnswer = async (
   const { output, originalMessages } = await openAnswerStream(deps, turn, plan);
   const streamState: StreamState = { failed: false };
   const onStreamError = reportStreamError(deps.modelHealth, streamState);
+  const timer = createToolTimer(() => deps.clock.now().getTime());
 
   return createUIMessageStream<UIMessage>({
     originalMessages,
     onError: onStreamError,
     execute: ({ writer }) => {
-      writer.merge(toAISdkStream(output, { from: "agent", version: "v7", onError: onStreamError }));
+      const chunks = toAISdkStream(output, {
+        from: "agent",
+        version: "v7",
+        onError: onStreamError,
+      });
+
+      writer.merge(withToolTiming(chunks, timer));
     },
     onEnd: async ({ responseMessage, outcome }) => {
       if (finishedWell(streamState, outcome)) {
@@ -179,7 +185,13 @@ export const streamAnswer = async (
       );
 
       if (stored) {
-        await recordAnswerDecision(deps, output, context, stored.id);
+        await recordAnswerDecision(
+          deps,
+          output,
+          context,
+          stored.id,
+          buildToolTrace(responseMessage, timer.durations),
+        );
       }
     },
   });
