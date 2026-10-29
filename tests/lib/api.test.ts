@@ -112,3 +112,18 @@ describe("api.get", () => {
     expect(error.status).toBe(0);
   });
 });
+
+describe("api.patch", () => {
+  it("sends the body with PATCH and returns the validated payload", async () => {
+    const fetchMock = vi.fn(async () => Response.json({ ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(api.patch("/x", { a: 1 }, z.object({ ok: z.boolean() }))).resolves.toEqual({
+      ok: true,
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/x",
+      expect.objectContaining({ method: "PATCH", body: JSON.stringify({ a: 1 }) }),
+    );
+  });
+});
