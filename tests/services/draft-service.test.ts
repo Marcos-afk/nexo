@@ -119,6 +119,24 @@ describe("confirm", () => {
     expect(await statusOf(database, SEEDED_DRAFT)).toBe("confirmed");
   });
 
+  it("remembers the created ticket so the draft can show its number later", async () => {
+    const { service } = await createService();
+    const { ticket } = await service.confirm(ANA, SEEDED_DRAFT);
+    const details = await service.get(ANA, SEEDED_DRAFT);
+
+    expect(details.targetTicketNumber).toBe(ticket.number);
+  });
+
+  it("keeps the target of an update draft untouched when confirming", async () => {
+    const { service } = await createService();
+    const input: DraftInput = { mode: "update", ticketNumber: "INC-20298", note: "Falha no Teams" };
+    const proposed = await service.propose(ANA, ANA_CHAT, input);
+
+    await service.confirm(ANA, proposed.id);
+
+    expect((await service.get(ANA, proposed.id)).targetTicketNumber).toBe("INC-20298");
+  });
+
   it("appends the note of an update draft to the target ticket", async () => {
     const { service } = await createService();
     const input: DraftInput = { mode: "update", ticketNumber: "INC-20298", note: "Falha no Teams" };

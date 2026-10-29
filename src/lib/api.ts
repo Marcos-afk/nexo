@@ -5,7 +5,7 @@ const NETWORK_ERROR_STATUS = 0;
 const HTTP_NO_CONTENT = 204;
 const GENERIC_API_ERROR = "Não foi possível concluir a operação. Tente novamente em instantes.";
 
-type HttpMethodType = "GET" | "POST";
+type HttpMethodType = "GET" | "POST" | "PATCH";
 
 export class ApiError extends Error {
   public readonly status: number;
@@ -76,4 +76,6 @@ export const api = {
     request("GET", path, signal ? { schema, signal } : { schema }),
   post: <T>(path: string, body: unknown, schema: z.ZodType<T>) =>
     request("POST", path, { body, schema }),
+  patch: <T>(path: string, body: unknown, schema: z.ZodType<T>) =>
+    request("PATCH", path, { body, schema }),
 };

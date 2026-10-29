@@ -1,9 +1,13 @@
 import { AUTHOR_LABELS } from "@/constants/chat";
 import type { ChatLineProps } from "@/models/chat";
 import { ActionLine } from "./action-line";
+import { AttachmentView } from "./attachment-view";
+import { MarkdownText } from "./markdown-text";
 
 interface AgentMessageProps {
   readonly line: ChatLineProps;
+  readonly isSendDisabled: boolean;
+  readonly onSend: (text: string) => void;
 }
 
 const ANALYST_BADGE_LABEL = "Suporte";
@@ -16,7 +20,7 @@ function AnalystBadge() {
   );
 }
 
-export function AgentMessage({ line }: AgentMessageProps) {
+export function AgentMessage({ line, isSendDisabled, onSend }: AgentMessageProps) {
   const isAnalyst = line.authorKind === "analyst";
 
   return (
@@ -27,10 +31,18 @@ export function AgentMessage({ line }: AgentMessageProps) {
         badge={isAnalyst ? <AnalystBadge /> : null}
       />
       {line.text && (
-        <p className="max-w-150 rounded-xl rounded-tl-sm border border-rule bg-paper px-4 py-3 text-sm leading-normal whitespace-pre-wrap text-ink">
-          {line.text}
-        </p>
+        <div className="flex max-w-150 flex-col gap-2 rounded-xl rounded-tl-sm border border-rule bg-paper px-4 py-3 text-sm leading-normal text-ink">
+          <MarkdownText text={line.text} />
+        </div>
       )}
+      {line.attachments.map((attachment) => (
+        <AttachmentView
+          key={attachment.key}
+          attachment={attachment}
+          isSendDisabled={isSendDisabled}
+          onSend={onSend}
+        />
+      ))}
     </div>
   );
 }

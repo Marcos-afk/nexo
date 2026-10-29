@@ -28,12 +28,13 @@ export function useChatPanel(initialMessages: UIMessage[], initialSession: ChatS
   const isTyping =
     status === "submitted" ||
     (status === "streaming" && lastLine?.authorKind === "agent" && lastLine.text === "");
-  const endRef = useChatScroll(`${lines.length}:${lastLine?.text.length ?? 0}:${isTyping}`);
+  const scrollKey = `${lines.length}:${lastLine?.text.length ?? 0}:${isTyping}`;
+  const scroll = useChatScroll(scrollKey);
   const chatState = { isLimitReached, assistantStatus, mode };
 
   return {
+    ...scroll,
     lines,
-    endRef,
     isTyping,
     isEmpty: lines.length === 0,
     isBusy: status === "submitted" || status === "streaming",

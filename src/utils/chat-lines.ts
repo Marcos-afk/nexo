@@ -2,10 +2,21 @@ import { getToolName, isToolUIPart, type UIMessage } from "ai";
 import { z } from "zod";
 import { CHAT_ACTION_LABELS } from "@/constants/chat";
 import { type MessageAuthorKind, messageAuthorKinds } from "@/domain/conversation";
-import type { ChatActionProps, ChatActionStatusType, ChatLineProps } from "@/models/chat";
+import type {
+  ChatActionProps,
+  ChatActionStatusType,
+  ChatAttachmentProps,
+  ChatLineProps,
+} from "@/models/chat";
+import {
+  buildDraftOutputSchema,
+  getTicketOutputSchema,
+  listTicketsOutputSchema,
+} from "@/schemas/chat";
 import { messageTextOf } from "@/utils/message-text";
 
 type ToolPart = Parameters<typeof getToolName>[0];
+type AttachmentParser = (output: unknown, key: string) => ChatAttachmentProps[];
 
 const metadataSchema = z.object({ authorKind: z.enum(messageAuthorKinds) });
 const failureOutputSchema = z.object({ error: z.string() });
@@ -15,6 +26,26 @@ const AUTHOR_KIND_BY_ROLE = {
   assistant: "agent",
   system: "system",
 } as const satisfies Record<UIMessage["role"], MessageAuthorKind>;
+
+const ATTACHMENT_PARSERS: Readonly<Record<string, AttachmentParser>> = {
+  buildDraft: (output, key) => {
+    const parsed = buildDraftOutputSchema.safeParse(output);
+
+    return parsed.success ? [{ kind: "draft", key, draftId: parsed.data.draftId }] : [];
+  },
+  listMyTickets: (output, key) => {
+    const parsed = listTicketsOutputSchema.safeParse(output);
+
+    return parsed.success && parsed.data.tickets.length > 0
+      ? [{ kind: "ticket-list", key, tickets: parsed.data.tickets }]
+      : [];
+  },
+  getTicket: (output, key) => {
+    const parsed = getTicketOutputSchema.safeParse(output);
+
+    return parsed.success ? [{ kind: "ticket", key, ticket: parsed.data.ticket }] : [];
+  },
+};
 
 const authorKindOf = (message: UIMessage): MessageAuthorKind => {
   const metadata = metadataSchema.safeParse(message.metadata);
@@ -40,14 +71,26 @@ const actionOf = (part: ToolPart): ChatActionProps[] => {
   return label === undefined ? [] : [{ key: part.toolCallId, label, status: statusOf(part) }];
 };
 
+const attachmentOf = (part: ToolPart): ChatAttachmentProps[] => {
+  const parse = ATTACHMENT_PARSERS[getToolName(part)];
+
+  return parse !== undefined && part.state === "output-available"
+    ? parse(part.output, part.toolCallId)
+    : [];
+};
+
 export const actionsOf = (message: UIMessage): ChatActionProps[] =>
   message.parts.flatMap((part) => (isToolUIPart(part) ? actionOf(part) : []));
+
+export const attachmentsOf = (message: UIMessage): ChatAttachmentProps[] =>
+  message.parts.flatMap((part) => (isToolUIPart(part) ? attachmentOf(part) : []));
 
 export const toChatLine = (message: UIMessage): ChatLineProps => ({
   id: message.id,
   authorKind: authorKindOf(message),
   text: messageTextOf(message),
   actions: actionsOf(message),
+  attachments: attachmentsOf(message),
 });
 
 export const countEmployeeMessages = (messages: readonly UIMessage[]): number =>
