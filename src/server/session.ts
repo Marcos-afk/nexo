@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { UnauthenticatedError } from "../domain/errors";
+import { isProduction } from "../env";
 import type { AuthService, AuthSession } from "../services/auth/auth-service";
 
 export const SESSION_COOKIE = "nexo_session";
@@ -32,7 +33,7 @@ export const startSessionCookie = async (session: AuthSession): Promise<void> =>
   (await cookies()).set(SESSION_COOKIE, session.id, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: isProduction,
     path: "/",
     ...(session.remember ? { expires: session.expiresAt } : {}),
   });

@@ -2,6 +2,7 @@ import { mkdirSync } from "node:fs";
 import { APP_DB_FILE, DATA_DIR, toLibSqlFileUrl } from "../config/data-paths";
 import type { ChatOrchestratorDeps } from "../conversation/chat-orchestrator";
 import { createDatabase, migrateDatabase } from "../db/client";
+import { env } from "../env";
 import { systemClock } from "../lib/clock";
 import { uuidGenerator } from "../lib/ids";
 import { createLogger, stdoutWrite } from "../lib/logger";
@@ -16,7 +17,6 @@ import { createLegacyGuard, createOutageSimulator } from "../services/tickets/le
 import { createTicketService } from "../services/tickets/ticket-service";
 
 const DEPS_CACHE_KEY = "service-deps";
-const LEGACY_OUTAGE_ENV = "LEGACY_OUTAGE_SECONDS";
 const MS_PER_SECOND = 1000;
 
 interface CachedDeps {
@@ -25,16 +25,10 @@ interface CachedDeps {
 
 const cache = new Map<string, CachedDeps>();
 
-const readOutageSeconds = (): number => {
-  const seconds = Number(process.env[LEGACY_OUTAGE_ENV]);
-
-  return Number.isFinite(seconds) && seconds > 0 ? seconds : 0;
-};
-
 const createLegacy = () => {
   const outage = createOutageSimulator(systemClock);
 
-  outage.startFor(readOutageSeconds() * MS_PER_SECOND);
+  outage.startFor(env.LEGACY_OUTAGE_SECONDS * MS_PER_SECOND);
 
   return createLegacyGuard({
     outage,
