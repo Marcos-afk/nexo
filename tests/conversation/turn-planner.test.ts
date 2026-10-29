@@ -104,7 +104,7 @@ describe("planTurn: answers with the model", () => {
     expect(await planTurn(deps, buildInput())).toEqual({
       kind: "answer",
       action: "answer",
-      toolNames: ["searchHelpArticles", "findSimilarTickets"],
+      toolNames: ["searchHelpArticles", "findSimilarTickets", "offerChoices"],
       offerAnalyst: false,
     });
   });

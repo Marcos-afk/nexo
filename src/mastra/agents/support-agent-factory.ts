@@ -42,6 +42,12 @@ const TOOL_INSTRUCTIONS = {
   requestHandoff: [
     "Se o funcionário pedir um analista, use requestHandoff com um resumo do caso. Depois disso você não responde mais nesta conversa.",
   ],
+  offerChoices: [
+    "Use offerChoices para mostrar botões de resposta rápida, sempre junto com um texto curto: escreva a pergunta ou a oferta na resposta e nunca responda só com os botões. Não repita as opções no texto.",
+    "Para perguntar quem é afetado, chame offerChoices com as opções 'Só eu', 'Minha equipe', 'Toda a empresa' e 'Não sei'.",
+    "Para uma pergunta com poucas respostas possíveis, como a versão do Windows, chame offerChoices com essas respostas (por exemplo '10' e '11').",
+    "Depois de consultar ou detalhar um chamado, ofereça os próximos passos com offerChoices: 'Falar com um analista', 'Adicionar informação' e 'Não, obrigado'.",
+  ],
 } as const satisfies Record<AgentToolName, readonly string[]>;
 
 const OFFER_ANALYST_INSTRUCTION =

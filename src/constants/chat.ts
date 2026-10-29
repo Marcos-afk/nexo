@@ -1,6 +1,7 @@
 import type { ConversationMode, MessageAuthorKind } from "@/domain/conversation";
 
 export const CHAT_ENDPOINT = "/api/chat";
+export const HANDOFF_ENDPOINT = "/api/chat/handoff";
 export const MESSAGE_LIMIT_WARNING_THRESHOLD = 25;
 
 export const CHAT_ACTION_LABELS: Readonly<Record<string, string>> = {
@@ -47,5 +48,7 @@ export const DEGRADED_NOTICE =
   "O sistema de chamados está instável. O Nexo ainda orienta, mas pode não conseguir abrir ou consultar chamados agora.";
 export const LIMIT_NOTICE =
   "Você atingiu o limite de mensagens desta sessão. Peça ajuda a um analista para continuar.";
+export const REQUEST_ANALYST_LABEL = "Falar com um analista";
+export const HANDOFF_ERROR = "Não foi possível chamar um analista agora. Tente de novo.";
 
 export const CHAT_ERROR_TITLE = "Não consegui responder agora.";

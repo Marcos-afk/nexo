@@ -92,7 +92,7 @@ const decisionCases: readonly DecisionCase[] = [
     facts: buildFacts({ triage: buildTriage({ confidence: CONFIDENCE_HANDOFF_THRESHOLD }) }),
     expected: {
       kind: "answer",
-      tools: ["searchHelpArticles", "findSimilarTickets"],
+      tools: ["searchHelpArticles", "findSimilarTickets", "offerChoices"],
       offerAnalyst: false,
     },
   },
@@ -102,7 +102,11 @@ const decisionCases: readonly DecisionCase[] = [
       triage: buildTriage({ intent: "ticket_lookup" }),
       hasOverdueTicket: true,
     }),
-    expected: { kind: "answer", tools: ["listMyTickets", "getTicket"], offerAnalyst: true },
+    expected: {
+      kind: "answer",
+      tools: ["listMyTickets", "getTicket", "offerChoices"],
+      offerAnalyst: true,
+    },
   },
 ];
 
@@ -113,9 +117,9 @@ describe("decideTurn: policy order", () => {
 });
 
 const toolsByAnsweredIntent: Readonly<Record<TriageIntent, readonly string[] | null>> = {
-  how_to: ["searchHelpArticles", "findSimilarTickets"],
-  ticket_lookup: ["listMyTickets", "getTicket"],
-  ticket_create: ["searchHelpArticles", "findSimilarTickets", "buildDraft"],
+  how_to: ["searchHelpArticles", "findSimilarTickets", "offerChoices"],
+  ticket_lookup: ["listMyTickets", "getTicket", "offerChoices"],
+  ticket_create: ["searchHelpArticles", "findSimilarTickets", "buildDraft", "offerChoices"],
   human_request: null,
   out_of_scope: null,
   chitchat: [],

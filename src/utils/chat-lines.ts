@@ -12,6 +12,7 @@ import {
   buildDraftOutputSchema,
   getTicketOutputSchema,
   listTicketsOutputSchema,
+  offerChoicesOutputSchema,
 } from "@/schemas/chat";
 import { messageTextOf } from "@/utils/message-text";
 
@@ -38,6 +39,13 @@ const ATTACHMENT_PARSERS: Readonly<Record<string, AttachmentParser>> = {
 
     return parsed.success && parsed.data.tickets.length > 0
       ? [{ kind: "ticket-list", key, tickets: parsed.data.tickets }]
+      : [];
+  },
+  offerChoices: (output, key) => {
+    const parsed = offerChoicesOutputSchema.safeParse(output);
+
+    return parsed.success
+      ? [{ kind: "choices", key, options: parsed.data.options, answer: null }]
       : [];
   },
   getTicket: (output, key) => {
@@ -92,6 +100,25 @@ export const toChatLine = (message: UIMessage): ChatLineProps => ({
   actions: actionsOf(message),
   attachments: attachmentsOf(message),
 });
+
+const answerAfter = (lines: readonly ChatLineProps[], index: number): string | null =>
+  lines.slice(index + 1).find((line) => line.authorKind === "employee")?.text ?? null;
+
+export const withChoiceAnswers = (lines: readonly ChatLineProps[]): ChatLineProps[] =>
+  lines.map((line, index) => {
+    if (!line.attachments.some((attachment) => attachment.kind === "choices")) {
+      return line;
+    }
+
+    const answer = answerAfter(lines, index);
+
+    return {
+      ...line,
+      attachments: line.attachments.map((attachment) =>
+        attachment.kind === "choices" ? { ...attachment, answer } : attachment,
+      ),
+    };
+  });
 
 export const countEmployeeMessages = (messages: readonly UIMessage[]): number =>
   messages.filter((message) => message.role === "user").length;
