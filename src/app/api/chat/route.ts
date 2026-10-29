@@ -1,11 +1,9 @@
 import { createUIMessageStreamResponse, safeValidateUIMessages } from "ai";
 import { z } from "zod";
 import { type ChatReply, handleChatMessage } from "@/conversation/chat-orchestrator";
-import { getContainer } from "@/server/container";
-import { requireSession } from "@/server/session";
 import { loadActiveConversationMessages } from "@/services/conversations/chat-turn";
 import { extractText } from "@/services/conversations/history";
-import { respondWith } from "../error-response";
+import { withSession } from "../with-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -44,21 +42,16 @@ const toResponse = (reply: ChatReply): Response =>
     ? createUIMessageStreamResponse({ stream: reply.stream })
     : Response.json({ mode: reply.mode }, { status: HTTP_ACCEPTED });
 
-export const GET = (): Promise<Response> =>
-  respondWith(async () => {
-    const { chat, auth } = await getContainer();
-    const session = await requireSession(auth);
+export const GET = withSession(async (_request, { session, container }) =>
+  Response.json(
+    await loadActiveConversationMessages(container.chat.conversations, session.user.id),
+  ),
+);
 
-    return Response.json(await loadActiveConversationMessages(chat.conversations, session.user.id));
-  });
+export const POST = withSession(async (request, { session, container }) => {
+  const text = await parseLastUserText(request);
 
-export const POST = (request: Request): Promise<Response> =>
-  respondWith(async () => {
-    const { chat, auth } = await getContainer();
-    const session = await requireSession(auth);
-    const text = await parseLastUserText(request);
-
-    return text instanceof Response
-      ? text
-      : toResponse(await handleChatMessage(chat, session.user.id, text));
-  });
+  return text instanceof Response
+    ? text
+    : toResponse(await handleChatMessage(container.chat, session.user.id, text));
+});
