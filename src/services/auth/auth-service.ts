@@ -5,6 +5,7 @@ import type { EmployeeRole } from "../../domain/employee";
 import { UnknownEmployeeError } from "../../domain/errors";
 import type { Clock } from "../../lib/clock";
 import type { IdGenerator } from "../../lib/ids";
+import type { Logger } from "../../lib/logger";
 
 const MS_PER_HOUR = 3_600_000;
 const HOURS_PER_DAY = 24;
@@ -18,6 +19,14 @@ export interface AuthServiceDeps {
   readonly database: Database;
   readonly clock: Clock;
   readonly ids: IdGenerator;
+  readonly logger?: Logger;
+}
+
+export interface Profile {
+  readonly name: string;
+  readonly email: string;
+  readonly department: string;
+  readonly passwordChangedAt: Date | null;
 }
 
 export interface AuthenticatedUser {
@@ -104,10 +113,42 @@ export const logout = async (
   await database.delete(sessions).where(eq(sessions.id, sessionId));
 };
 
+export const getProfile = async (
+  { database }: Pick<AuthServiceDeps, "database">,
+  employeeId: string,
+): Promise<Profile> => {
+  const [profile] = await database
+    .select({
+      name: employees.name,
+      email: employees.email,
+      department: employees.department,
+      passwordChangedAt: employees.passwordChangedAt,
+    })
+    .from(employees)
+    .where(eq(employees.id, employeeId));
+
+  if (!profile) {
+    throw new UnknownEmployeeError();
+  }
+
+  return profile;
+};
+
+export const requestPasswordReset = async (
+  deps: AuthServiceDeps,
+  employeeId: string,
+): Promise<void> => {
+  await getProfile(deps, employeeId);
+
+  deps.logger?.info({ employeeId }, "Password reset requested (simulated, no e-mail sent)");
+};
+
 export const createAuthService = (deps: AuthServiceDeps) => ({
   login: (input: LoginInput) => login(deps, input),
   resolve: (sessionId: string) => resolveSession(deps, sessionId),
   logout: (sessionId: string) => logout(deps, sessionId),
+  profile: (employeeId: string) => getProfile(deps, employeeId),
+  requestPasswordReset: (employeeId: string) => requestPasswordReset(deps, employeeId),
 });
 
 export type AuthService = ReturnType<typeof createAuthService>;
