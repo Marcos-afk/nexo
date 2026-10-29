@@ -36,6 +36,9 @@ const failureMessageOf = async (response: Response): Promise<string> => {
   return body.success ? body.data.error : GENERIC_API_ERROR;
 };
 
+export const apiErrorOf = async (response: Response): Promise<ApiError> =>
+  new ApiError(response.status, await failureMessageOf(response));
+
 const send = (method: HttpMethodType, path: string, options: ApiRequestOptions<unknown>) =>
   fetch(path, {
     method,
@@ -54,7 +57,7 @@ const request = async <T>(
   const response = await send(method, path, options);
 
   if (!response.ok) {
-    throw new ApiError(response.status, await failureMessageOf(response));
+    throw await apiErrorOf(response);
   }
 
   const payload =

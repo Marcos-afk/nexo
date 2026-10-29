@@ -22,6 +22,13 @@ import {
 } from "./history";
 
 const TEXT_PART_TYPE = "text";
+const NEW_CONVERSATION_MODE: ConversationMode = "agent";
+
+export interface ChatSession {
+  readonly mode: ConversationMode;
+  readonly employeeMessageCount: number;
+  readonly messageLimit: number;
+}
 
 export interface ChatTurn {
   readonly ref: ConversationRef;
@@ -80,6 +87,30 @@ export const recordAgentReply = async (
     content: extractText(reply),
     parts: reply.parts,
   });
+};
+
+export const loadChatSession = async (
+  deps: ConversationServiceDeps,
+  ownerId: string,
+): Promise<ChatSession> => {
+  const conversation = await getActiveConversation(deps, ownerId);
+
+  if (!conversation) {
+    return {
+      mode: NEW_CONVERSATION_MODE,
+      employeeMessageCount: 0,
+      messageLimit: SESSION_MESSAGE_LIMIT,
+    };
+  }
+
+  return {
+    mode: conversation.mode,
+    employeeMessageCount: await countEmployeeMessages(deps, {
+      ownerId,
+      conversationId: conversation.id,
+    }),
+    messageLimit: SESSION_MESSAGE_LIMIT,
+  };
 };
 
 export const loadActiveConversationMessages = async (
