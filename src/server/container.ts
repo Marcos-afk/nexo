@@ -1,35 +1,80 @@
 import { mkdirSync } from "node:fs";
 import { APP_DB_FILE, DATA_DIR, toLibSqlFileUrl } from "../config/data-paths";
+import type { ChatOrchestratorDeps } from "../conversation/chat-orchestrator";
 import { createDatabase, migrateDatabase } from "../db/client";
 import { systemClock } from "../lib/clock";
 import { uuidGenerator } from "../lib/ids";
+import { createLogger, stdoutWrite } from "../lib/logger";
+import { triageAgent } from "../mastra/agents/triage-agent";
 import type { ConversationServiceDeps } from "../services/conversations/conversation-service";
+import { createDecisionService } from "../services/decisions/decision-service";
+import { createDraftService } from "../services/drafts/draft-service";
+import { createHandoffService } from "../services/handoff/handoff-service";
+import { createHelpCenterService } from "../services/help-center/help-center-service";
+import { createLegacyGuard, createOutageSimulator } from "../services/tickets/legacy-guard";
+import { createTicketService } from "../services/tickets/ticket-service";
 
 const DEPS_CACHE_KEY = "service-deps";
+const LEGACY_OUTAGE_ENV = "LEGACY_OUTAGE_SECONDS";
+const MS_PER_SECOND = 1000;
 
 interface CachedDeps {
-  readonly deps: Promise<ConversationServiceDeps>;
+  readonly deps: Promise<ChatOrchestratorDeps>;
 }
 
 const cache = new Map<string, CachedDeps>();
 
-const createServiceDeps = async (): Promise<ConversationServiceDeps> => {
+const readOutageSeconds = (): number => {
+  const seconds = Number(process.env[LEGACY_OUTAGE_ENV]);
+
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : 0;
+};
+
+const createLegacy = () => {
+  const outage = createOutageSimulator(systemClock);
+
+  outage.startFor(readOutageSeconds() * MS_PER_SECOND);
+
+  return createLegacyGuard({
+    outage,
+    logger: createLogger({ level: "info", clock: systemClock, write: stdoutWrite }),
+  });
+};
+
+const createChatDeps = async (): Promise<ChatOrchestratorDeps> => {
   mkdirSync(DATA_DIR, { recursive: true });
   const database = createDatabase(toLibSqlFileUrl(APP_DB_FILE));
 
   await migrateDatabase(database);
 
-  return { database, clock: systemClock, ids: uuidGenerator };
+  const conversations: ConversationServiceDeps = {
+    database,
+    clock: systemClock,
+    ids: uuidGenerator,
+  };
+  const legacy = createLegacy();
+  const ticketDeps = { ...conversations, legacy };
+
+  return {
+    conversations,
+    clock: systemClock,
+    triageAgent,
+    tickets: createTicketService(ticketDeps),
+    drafts: createDraftService(ticketDeps),
+    handoff: createHandoffService(ticketDeps),
+    helpCenter: createHelpCenterService({ database }),
+    decisions: createDecisionService({ database, ids: uuidGenerator }),
+  };
 };
 
-export const getServiceDeps = (): Promise<ConversationServiceDeps> => {
+export const getChatDeps = (): Promise<ChatOrchestratorDeps> => {
   const existing = cache.get(DEPS_CACHE_KEY);
 
   if (existing) {
     return existing.deps;
   }
 
-  const created = { deps: createServiceDeps() };
+  const created = { deps: createChatDeps() };
   cache.set(DEPS_CACHE_KEY, created);
 
   return created.deps;
