@@ -1,2 +1,51 @@
+import type { ConversationMode, MessageAuthorKind } from "@/domain/conversation";
+
 export const CHAT_ENDPOINT = "/api/chat";
-export const CHAT_READY_STATUS = "ready";
+export const MESSAGE_LIMIT_WARNING_THRESHOLD = 25;
+
+export const CHAT_ACTION_LABELS: Readonly<Record<string, string>> = {
+  searchHelpArticles: "buscou na central de ajuda",
+  findSimilarTickets: "buscou chamados parecidos",
+  listMyTickets: "consultou seus chamados",
+  getTicket: "consultou o chamado",
+  buildDraft: "montou o rascunho",
+  requestHandoff: "pediu um analista",
+};
+
+export const AUTHOR_LABELS = {
+  employee: "Você",
+  agent: "Nexo Assist",
+  analyst: "Analista",
+  system: "Sistema",
+} as const satisfies Record<MessageAuthorKind, string>;
+
+export const MODE_NOTICES = {
+  agent: null,
+  awaiting_analyst: "Um analista vai atender. O Nexo não responde mais por aqui.",
+  with_analyst: "Um analista está atendendo você. O Nexo está em pausa nesta conversa.",
+  closed: null,
+} as const satisfies Record<ConversationMode, string | null>;
+
+export const EMPTY_CHAT_TITLE = "Como posso ajudar?";
+export const EMPTY_CHAT_SUBTITLE =
+  "Descreva o problema. O Nexo consulta seus chamados e a central de ajuda, e chama um analista quando precisa.";
+
+export const EMPTY_CHAT_SUGGESTIONS = [
+  "Meu notebook não conecta na VPN",
+  "Quero abrir um chamado",
+  "Quais são meus chamados em aberto?",
+  "Como redefino minha senha?",
+] as const;
+
+export const COMPOSER_PLACEHOLDER = "Escreva para o Nexo…";
+export const OFFLINE_PLACEHOLDER = "O assistente está offline no momento";
+export const LIMIT_PLACEHOLDER = "Limite de mensagens atingido";
+
+export const OFFLINE_NOTICE =
+  "O assistente está offline. Você poderá escrever de novo assim que ele voltar.";
+export const DEGRADED_NOTICE =
+  "O sistema de chamados está instável. O Nexo ainda orienta, mas pode não conseguir abrir ou consultar chamados agora.";
+export const LIMIT_NOTICE =
+  "Você atingiu o limite de mensagens desta sessão. Peça ajuda a um analista para continuar.";
+
+export const CHAT_ERROR_TITLE = "Não consegui responder agora.";
