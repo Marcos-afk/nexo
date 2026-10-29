@@ -90,7 +90,11 @@ const decisionCases: readonly DecisionCase[] = [
   {
     name: "answers exactly at the confidence threshold",
     facts: buildFacts({ triage: buildTriage({ confidence: CONFIDENCE_HANDOFF_THRESHOLD }) }),
-    expected: { kind: "answer", tools: ["searchHelpArticles"], offerAnalyst: false },
+    expected: {
+      kind: "answer",
+      tools: ["searchHelpArticles", "findSimilarTickets"],
+      offerAnalyst: false,
+    },
   },
   {
     name: "offers an analyst when a ticket is overdue",
@@ -109,7 +113,7 @@ describe("decideTurn: policy order", () => {
 });
 
 const toolsByAnsweredIntent: Readonly<Record<TriageIntent, readonly string[] | null>> = {
-  how_to: ["searchHelpArticles"],
+  how_to: ["searchHelpArticles", "findSimilarTickets"],
   ticket_lookup: ["listMyTickets", "getTicket"],
   ticket_create: ["searchHelpArticles", "findSimilarTickets", "buildDraft"],
   human_request: null,

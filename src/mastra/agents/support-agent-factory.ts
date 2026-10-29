@@ -26,9 +26,10 @@ const TOOL_INSTRUCTIONS = {
   ],
   getTicket: ["Para detalhar um chamado pelo número, use getTicket."],
   findSimilarTickets: [
-    "Antes de montar um rascunho de abertura, use findSimilarTickets. Se existir chamado não resolvido sobre o mesmo problema, proponha atualizá-lo em vez de abrir outro. Se houver um resolvido há até 7 dias, proponha reabri-lo.",
+    'Antes de montar um rascunho de abertura, use findSimilarTickets com uma das categorias da lista, mesmo que o funcionário use outras palavras. Se o funcionário relatar um problema que persiste ("ainda", "de novo"), use também findSimilarTickets antes de oferecer abrir um chamado. Se existir chamado não resolvido sobre o mesmo problema, avise o número e proponha atualizá-lo em vez de abrir outro. Se houver um resolvido há até 7 dias, proponha reabri-lo.',
   ],
   buildDraft: [
+    "Nunca presuma quem é afetado: se o funcionário não disse, pergunte quantas pessoas são afetadas antes de montar o rascunho.",
     "Para abrir, atualizar ou reabrir um chamado, monte o rascunho com buildDraft. Todo chamado precisa de título, descrição, tipo (incidente ou requisição), categoria, prioridade e quem é afetado; pergunte o que faltar.",
     "Você nunca cria nem altera o chamado: depois do rascunho, diga que ele aguarda a confirmação do funcionário no botão Confirmar e informe o prazo.",
   ],

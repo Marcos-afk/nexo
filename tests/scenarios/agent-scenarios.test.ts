@@ -201,7 +201,7 @@ describe("scenario 6: complete new problem", () => {
       mode: "create",
       ticket: {
         type: "incident",
-        category: "Rede",
+        category: "Rede e VPN",
         subcategory: null,
         title: "VPN cai a cada 10 minutos",
         description: "A conexão da VPN cai e volta sozinha.",
@@ -213,7 +213,7 @@ describe("scenario 6: complete new problem", () => {
       ANA,
       { intent: "ticket_create" },
       [
-        { toolCall: { name: "findSimilarTickets", input: { category: "Rede" } } },
+        { toolCall: { name: "findSimilarTickets", input: { category: "Rede e VPN" } } },
         { toolCall: { name: "buildDraft", input: draft } },
         { text: "Confira o rascunho e confirme." },
       ],

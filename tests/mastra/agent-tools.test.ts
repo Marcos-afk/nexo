@@ -158,6 +158,16 @@ describe("searchHelpArticles", () => {
 });
 
 describe("findSimilarTickets", () => {
+  it("lists every valid category for the model and rejects any other", async () => {
+    const { tools } = await createTools();
+    const validate = tools.findSimilarTickets.inputSchema?.["~standard"].validate;
+    const accepts = async (category: string) => !(await validate?.({ category }))?.issues;
+
+    expect(tools.findSimilarTickets.description).toContain("Rede e VPN");
+    expect(await accepts("SharePoint")).toBe(false);
+    expect(await accepts("Acesso")).toBe(true);
+  });
+
   it("separates open tickets from recently resolved ones", async () => {
     const { tools } = await createTools();
     const result = await invoke(tools.findSimilarTickets, { category: "Acesso" });
@@ -171,7 +181,7 @@ const validCreate = {
   mode: "create",
   ticket: {
     type: "incident",
-    category: "Rede",
+    category: "Rede e VPN",
     subcategory: null,
     title: "VPN cai a cada 10 minutos",
     description: "A conexão da VPN cai e volta sozinha.",

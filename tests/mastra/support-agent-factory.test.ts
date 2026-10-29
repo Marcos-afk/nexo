@@ -42,6 +42,13 @@ describe("selectTools", () => {
 });
 
 describe("buildSupportInstructions", () => {
+  it.each([
+    { tool: "buildDraft", text: "Nunca presuma quem é afetado" },
+    { tool: "findSimilarTickets", text: "categorias da lista" },
+  ] as const)("tells the model how to use $tool", ({ tool, text }) => {
+    expect(buildSupportInstructions([tool], false)).toContain(text);
+  });
+
   it("always carries the privacy and scope rules", () => {
     const instructions = buildSupportInstructions([], false);
 
