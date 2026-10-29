@@ -1,4 +1,5 @@
 import type { ChatOrchestratorDeps } from "../../src/conversation/chat-orchestrator";
+import { createModelHealth } from "../../src/conversation/model-health";
 import type { Database } from "../../src/db/client";
 import { createTriageAgent } from "../../src/mastra/agents/triage-agent";
 import type { ModelSelection } from "../../src/mastra/models";
@@ -32,6 +33,7 @@ export const createChatDeps = async ({
   return {
     conversations,
     clock,
+    modelHealth: createModelHealth(clock),
     triageAgent: createTriageAgent(triage),
     tickets: createTicketService(conversations),
     drafts: createDraftService(conversations),

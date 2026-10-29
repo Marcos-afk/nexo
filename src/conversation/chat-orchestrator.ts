@@ -1,6 +1,7 @@
 import type { ConversationMode } from "../domain/conversation";
 import { shouldInvokeAgent } from "../domain/turn-policy";
 import { beginChatTurn, type ChatTurn } from "../services/conversations/chat-turn";
+import { observeModel } from "./model-health";
 import { type ReplyDeps, type ReplyStream, streamAnswer, streamFixedReply } from "./reply-streams";
 import { runTriage, type TriageRunnerDeps } from "./triage-runner";
 import { planTurn, type TurnPlannerDeps } from "./turn-planner";
@@ -28,7 +29,9 @@ export const handleChatMessage = async (
     return skipped(turn);
   }
 
-  const triage = await runTriage({ agent: deps.triageAgent, clock: deps.clock }, turn.history);
+  const triage = await observeModel(deps.modelHealth, () =>
+    runTriage({ agent: deps.triageAgent, clock: deps.clock }, turn.history),
+  );
   const plan = await planTurn(deps, {
     ref: turn.ref,
     mode: turn.mode,

@@ -10,6 +10,7 @@ export interface LegacyGuard {
 export interface OutageSimulator {
   readonly startFor: (durationMs: number) => void;
   readonly assertUp: () => void;
+  readonly isDown: () => boolean;
 }
 
 export interface LegacyGuardOptions {
@@ -32,6 +33,7 @@ export const createOutageSimulator = (clock: Clock): OutageSimulator => {
     startFor: (durationMs) => {
       state.downUntilMs = clock.now().getTime() + durationMs;
     },
+    isDown: () => clock.now().getTime() < state.downUntilMs,
     assertUp: () => {
       if (clock.now().getTime() < state.downUntilMs) {
         throw new LegacyTransientError();

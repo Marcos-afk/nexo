@@ -13,6 +13,7 @@ import type { ConversationServiceDeps } from "../services/conversations/conversa
 import { appendMessage } from "../services/conversations/conversation-service";
 import { extractText, hasReplyContent } from "../services/conversations/history";
 import type { DecisionService } from "../services/decisions/decision-service";
+import { type ModelHealth, observeModel } from "./model-health";
 import type { TriageOutcome } from "./triage-runner";
 import type { TurnPlan } from "./turn-planner";
 
@@ -22,6 +23,7 @@ export interface ReplyDeps extends AgentToolDeps {
   readonly conversations: ConversationServiceDeps;
   readonly decisions: DecisionService;
   readonly clock: Clock;
+  readonly modelHealth: ModelHealth;
   readonly supportModel?: ModelSelection;
 }
 
@@ -44,6 +46,22 @@ export const withFallbackText = (reply: UIMessage): UIMessage =>
 
 const toStreamErrorMessage = (error: unknown): string =>
   classifyModelError(error)?.message ?? STREAM_FAILURE_MESSAGE;
+
+interface StreamState {
+  failed: boolean;
+}
+
+const reportStreamError =
+  (health: ModelHealth, state: StreamState) =>
+  (error: unknown): string => {
+    state.failed = true;
+    health.markFailure(error);
+
+    return toStreamErrorMessage(error);
+  };
+
+const finishedWell = (state: StreamState, outcome: { readonly status: string }): boolean =>
+  !state.failed && outcome.status !== "failed" && outcome.status !== "aborted";
 
 const buildRequestContext = (turn: ChatTurn): RequestContext =>
   new RequestContext([
@@ -76,6 +94,7 @@ export const streamFixedReply = async (
     latencyMs: triage.latencyMs,
     model: triage.model,
   });
+  deps.modelHealth.markOk();
 
   return createUIMessageStream<UIMessage>({
     execute: ({ writer }) => {
@@ -113,13 +132,7 @@ const recordAnswerDecision = async (
   });
 };
 
-export const streamAnswer = async (
-  deps: ReplyDeps,
-  turn: ChatTurn,
-  plan: AnswerPlan,
-  triage: TriageOutcome,
-): Promise<ReplyStream> => {
-  const context = { triage, plan, startedAt: deps.clock.now().getTime() };
+const openAnswerStream = async (deps: ReplyDeps, turn: ChatTurn, plan: AnswerPlan) => {
   const agent = createSupportAgent({
     tools: createAgentTools(deps),
     toolNames: plan.toolNames,
@@ -127,20 +140,38 @@ export const streamAnswer = async (
     ...(deps.supportModel ? { model: deps.supportModel } : {}),
   });
   const originalMessages = [...turn.history];
-  const output = await agent.stream(originalMessages, {
-    ...createModelCallOptions(),
-    requestContext: buildRequestContext(turn),
-  });
+  const output = await observeModel(deps.modelHealth, () =>
+    agent.stream(originalMessages, {
+      ...createModelCallOptions(),
+      requestContext: buildRequestContext(turn),
+    }),
+  );
+
+  return { output, originalMessages };
+};
+
+export const streamAnswer = async (
+  deps: ReplyDeps,
+  turn: ChatTurn,
+  plan: AnswerPlan,
+  triage: TriageOutcome,
+): Promise<ReplyStream> => {
+  const context = { triage, plan, startedAt: deps.clock.now().getTime() };
+  const { output, originalMessages } = await openAnswerStream(deps, turn, plan);
+  const streamState: StreamState = { failed: false };
+  const onStreamError = reportStreamError(deps.modelHealth, streamState);
 
   return createUIMessageStream<UIMessage>({
     originalMessages,
-    onError: toStreamErrorMessage,
+    onError: onStreamError,
     execute: ({ writer }) => {
-      writer.merge(
-        toAISdkStream(output, { from: "agent", version: "v7", onError: toStreamErrorMessage }),
-      );
+      writer.merge(toAISdkStream(output, { from: "agent", version: "v7", onError: onStreamError }));
     },
-    onEnd: async ({ responseMessage }) => {
+    onEnd: async ({ responseMessage, outcome }) => {
+      if (finishedWell(streamState, outcome)) {
+        deps.modelHealth.markOk();
+      }
+
       const stored = await recordAgentReply(
         deps.conversations,
         turn.ref,
