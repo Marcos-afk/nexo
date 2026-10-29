@@ -1,5 +1,6 @@
 import { type EventAudience, isVisibleTo, type RealtimeEvent } from "../domain/realtime";
 import type { BusEntry, EventBus } from "../lib/event-bus";
+import type { PresenceTracker } from "./presence";
 
 export const HEARTBEAT_INTERVAL_MS = 15_000;
 export const RETRY_INTERVAL_MS = 3000;
@@ -15,6 +16,7 @@ export interface EventStreamOptions {
   readonly audience: EventAudience;
   readonly lastEventId: number | null;
   readonly signal: AbortSignal;
+  readonly presence?: Pick<PresenceTracker, "connect">;
 }
 
 const encoder = new TextEncoder();
@@ -85,6 +87,7 @@ const openSubscription = (
 
   const heartbeat = setInterval(() => send(heartbeatFrame), HEARTBEAT_INTERVAL_MS);
   const unsubscribe = options.bus.subscribe(sendEntry);
+  const disconnect = options.presence?.connect(options.audience.id);
 
   const stop = (): boolean => {
     if (state.closed) {
@@ -94,6 +97,7 @@ const openSubscription = (
     state.closed = true;
     clearInterval(heartbeat);
     unsubscribe();
+    disconnect?.();
 
     return true;
   };

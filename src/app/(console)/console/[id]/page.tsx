@@ -8,6 +8,7 @@ import { findSession } from "@/server/session";
 
 interface ConversationPageProps {
   readonly params: Promise<{ id: string }>;
+  readonly searchParams: Promise<{ decision?: string }>;
 }
 
 async function fetchConversation(id: string): Promise<ConsoleConversationProps | null> {
@@ -29,13 +30,19 @@ async function fetchConversation(id: string): Promise<ConsoleConversationProps |
   }
 }
 
-export default async function ConsoleConversation({ params }: ConversationPageProps) {
-  const { id } = await params;
+export default async function ConsoleConversation({ params, searchParams }: ConversationPageProps) {
+  const [{ id }, { decision }] = await Promise.all([params, searchParams]);
   const conversation = await fetchConversation(id);
 
   if (!conversation) {
     notFound();
   }
 
-  return <ConversationView key={conversation.id} initial={conversation} />;
+  return (
+    <ConversationView
+      key={conversation.id}
+      initial={conversation}
+      decisionMessageId={decision ?? null}
+    />
+  );
 }

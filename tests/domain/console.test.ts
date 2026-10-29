@@ -11,7 +11,7 @@ const facts = (overrides: Partial<LabelFacts>): LabelFacts => ({
   handoffReason: null,
   ticketNumber: null,
   contactDueAt: null,
-  lastConfidence: null,
+  lastDecision: null,
   ...overrides,
 });
 
@@ -25,13 +25,13 @@ describe("labelOf", () => {
     ],
     [
       "a transfer that kept a confident decision",
-      facts({ mode: "awaiting_analyst", lastConfidence: 95 }),
+      facts({ mode: "awaiting_analyst", lastDecision: { confidence: 95, messageId: "m-1" } }),
       { kind: "transferred", ticketNumber: null, contactDueAt: null },
     ],
     [
       "a transfer by low confidence",
-      facts({ mode: "awaiting_analyst", lastConfidence: 41 }),
-      { kind: "agent_asked_help", confidence: 41 },
+      facts({ mode: "awaiting_analyst", lastDecision: { confidence: 41, messageId: "m-1" } }),
+      { kind: "agent_asked_help", confidence: 41, decisionMessageId: "m-1" },
     ],
     [
       "a conversation taken by the viewer",

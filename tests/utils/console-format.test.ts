@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ConsoleLabelProps } from "../../src/models/console";
-import { avatarToneOf, labelViewOf, timeLabelOf } from "../../src/utils/console-format";
+import { avatarToneOf, dateTimeOf, labelViewOf, timeLabelOf } from "../../src/utils/console-format";
 
 const NOW = new Date("2026-10-28T13:00:00Z");
 
@@ -28,7 +28,7 @@ describe("labelViewOf", () => {
     ],
     [
       "a request for help by low confidence",
-      { kind: "agent_asked_help", confidence: 41 },
+      { kind: "agent_asked_help", confidence: 41, decisionMessageId: "m-1" },
       { text: "Agent pediu ajuda · confiança 41%", tone: "danger" },
     ],
     ["the agent answering", { kind: "agent_active" }, { text: "Agent atendendo", tone: "neutral" }],
@@ -76,5 +76,11 @@ describe("timeLabelOf", () => {
 describe("avatarToneOf", () => {
   it("always gives the same tone to the same person", () => {
     expect(avatarToneOf("emp-ana")).toEqual(avatarToneOf("emp-ana"));
+  });
+});
+
+describe("dateTimeOf", () => {
+  it("writes the day and the time of the office", () => {
+    expect(dateTimeOf("2026-10-23T12:43:00Z")).toBe("23/10 às 09:43");
   });
 });

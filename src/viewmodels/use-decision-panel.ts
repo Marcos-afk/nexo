@@ -20,8 +20,8 @@ export interface DecisionPanel {
   readonly toggle: () => void;
 }
 
-export function useDecisionPanel(messageId: string): DecisionPanel {
-  const [isOpen, setIsOpen] = useState(false);
+export function useDecisionPanel(messageId: string, initiallyOpen = false): DecisionPanel {
+  const [isOpen, setIsOpen] = useState(initiallyOpen);
   const [state, setState] = useState<DecisionStateType>(CLOSED);
 
   useEffect(() => {

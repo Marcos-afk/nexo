@@ -196,7 +196,7 @@ export const seedDrafts: readonly NewDraft[] = [
 export const seedDecisions: readonly NewDecision[] = [
   {
     id: "dec-ana-handoff",
-    messageId: "m-c-ana-handoff-3",
+    messageId: "m-c-ana-handoff-2",
     intent: "human_request",
     understood: "A funcionária pede para falar com uma pessoa.",
     action: "transfer",
@@ -211,7 +211,7 @@ export const seedDecisions: readonly NewDecision[] = [
   },
   {
     id: "dec-bruno-low-confidence",
-    messageId: "m-c-bruno-1",
+    messageId: "m-c-bruno-2",
     intent: "unclear",
     understood: "Falha intermitente de sistema sem detalhes suficientes.",
     action: "transfer",

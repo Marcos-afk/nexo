@@ -6,6 +6,7 @@ import type { ConversationMode, MessageAuthorKind } from "../../domain/conversat
 import type { AnalystLevel } from "../../domain/employee";
 import { ConversationNotFoundError } from "../../domain/errors";
 import type { EventPublisher } from "../../domain/realtime";
+import type { TicketPriority } from "../../domain/sla";
 import type { TicketStatus } from "../../domain/ticket";
 import type { Clock } from "../../lib/clock";
 import { requireAnalyst } from "../analysts/require-analyst";
@@ -17,6 +18,7 @@ export interface ConsoleConversationDeps {
   readonly database: Database;
   readonly clock: Clock;
   readonly events?: EventPublisher;
+  readonly presence?: { readonly isOnline: (userId: string) => boolean };
 }
 
 export interface ConsoleMessage {
@@ -33,13 +35,17 @@ export interface ConsoleConversation {
   readonly id: string;
   readonly viewerId: string;
   readonly employee: { readonly id: string; readonly name: string; readonly department: string };
+  readonly employeeOnline: boolean;
   readonly mode: ConversationMode;
   readonly handoffLevel: AnalystLevel | null;
+  readonly handoffReason: string | null;
+  readonly handoffSummary: string | null;
   readonly contactDueAt: Date | null;
   readonly ticket: {
     readonly number: string;
     readonly title: string;
     readonly status: TicketStatus;
+    readonly priority: TicketPriority;
   } | null;
   readonly assignedAnalyst: {
     readonly id: string;
@@ -56,7 +62,12 @@ const selectConversation = (database: Database, conversationId: string) =>
     .select({
       conversation: conversations,
       employee: { id: employees.id, name: employees.name, department: employees.department },
-      ticket: { number: tickets.number, title: tickets.title, status: tickets.status },
+      ticket: {
+        number: tickets.number,
+        title: tickets.title,
+        status: tickets.status,
+        priority: tickets.priority,
+      },
       assignee: { id: assignee.id, name: assignee.name, level: assignee.level },
     })
     .from(conversations)
@@ -114,7 +125,7 @@ const toConsoleMessage = (
 };
 
 export const getConsoleConversation = async (
-  { database }: ConsoleConversationDeps,
+  { database, presence }: ConsoleConversationDeps,
   analystId: string,
   conversationId: string,
 ): Promise<ConsoleConversation> => {
@@ -141,8 +152,11 @@ export const getConsoleConversation = async (
     id: conversation.id,
     viewerId: analystId,
     employee: row.employee,
+    employeeOnline: presence?.isOnline(row.employee.id) ?? false,
     mode: conversation.mode,
     handoffLevel: conversation.handoffLevel,
+    handoffReason: conversation.handoffReason,
+    handoffSummary: conversation.handoffSummary,
     contactDueAt: conversation.contactDueAt,
     ticket: row.ticket,
     assignedAnalyst: row.assignee,

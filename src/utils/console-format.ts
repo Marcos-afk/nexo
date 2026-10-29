@@ -108,3 +108,9 @@ export const dayLabelOf = (iso: string, now: Date): string => {
 
   return dayKeyOf(date) === dayKeyOf(yesterday) ? "Ontem" : dayFormat.format(date);
 };
+
+export const dateTimeOf = (iso: string): string => {
+  const date = new Date(iso);
+
+  return `${dayFormat.format(date)} às ${timeFormat.format(date)}`;
+};

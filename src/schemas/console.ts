@@ -2,8 +2,14 @@ import { z } from "zod";
 import { analystAvailabilities, consoleFilters } from "@/domain/console";
 import { conversationModes, messageAuthorKinds } from "@/domain/conversation";
 import { analystLevels } from "@/domain/employee";
-import { ticketStatuses } from "@/domain/ticket";
-import type { ConsoleConversationProps, ConsoleProps } from "@/models/console";
+import { ticketPriorities } from "@/domain/sla";
+import { ticketEventKinds, ticketStatuses, ticketTypes } from "@/domain/ticket";
+import type {
+  ConsoleConversationProps,
+  ConsoleProps,
+  ConsoleTicketDetailProps,
+  ConversationTicketsProps,
+} from "@/models/console";
 
 const MAX_QUERY_LENGTH = 100;
 
@@ -20,7 +26,11 @@ const labelSchema = z.discriminatedUnion("kind", [
     ticketNumber: z.string().nullable(),
     contactDueAt: z.string().nullable(),
   }),
-  z.object({ kind: z.literal("agent_asked_help"), confidence: z.number() }),
+  z.object({
+    kind: z.literal("agent_asked_help"),
+    confidence: z.number(),
+    decisionMessageId: z.string(),
+  }),
   z.object({ kind: z.literal("agent_active") }),
   z.object({ kind: z.literal("resolved_by_agent") }),
   z.object({ kind: z.literal("closed") }),
@@ -76,11 +86,19 @@ export const conversationResponseSchema = z.object({
     id: z.string(),
     viewerId: z.string(),
     employee: z.object({ id: z.string(), name: z.string(), department: z.string() }),
+    employeeOnline: z.boolean(),
     mode: z.enum(conversationModes),
     handoffLevel: z.enum(analystLevels).nullable(),
+    handoffReason: z.string().nullable(),
+    handoffSummary: z.string().nullable(),
     contactDueAt: z.string().nullable(),
     ticket: z
-      .object({ number: z.string(), title: z.string(), status: z.enum(ticketStatuses) })
+      .object({
+        number: z.string(),
+        title: z.string(),
+        status: z.enum(ticketStatuses),
+        priority: z.enum(ticketPriorities),
+      })
       .nullable(),
     assignedAnalyst: z
       .object({ id: z.string(), name: z.string(), level: z.enum(analystLevels).nullable() })
@@ -102,3 +120,53 @@ export const conversationResponseSchema = z.object({
 export const actionResponseSchema = z.looseObject({});
 
 export const eventSignalSchema = z.object({ conversationId: z.string() });
+
+const ticketItemSchema = z.object({
+  number: z.string(),
+  title: z.string(),
+  status: z.enum(ticketStatuses),
+  priority: z.enum(ticketPriorities),
+  dueAt: z.string(),
+  updatedAt: z.string(),
+  overdue: z.boolean(),
+  isCurrent: z.boolean(),
+  lastEvent: z.object({ text: z.string(), at: z.string() }).nullable(),
+});
+
+export const ticketsResponseSchema = z.object({
+  tickets: z.object({
+    employeeName: z.string(),
+    open: z.number(),
+    closed: z.number(),
+    tickets: z.array(ticketItemSchema),
+  }),
+}) satisfies z.ZodType<{ tickets: ConversationTicketsProps }>;
+
+export const ticketDetailResponseSchema = z.object({
+  detail: z.object({
+    ticket: z.object({
+      number: z.string(),
+      type: z.enum(ticketTypes),
+      title: z.string(),
+      description: z.string(),
+      category: z.string(),
+      subcategory: z.string().nullable(),
+      priority: z.enum(ticketPriorities),
+      status: z.enum(ticketStatuses),
+      affected: z.string().nullable(),
+      dueAt: z.string(),
+      createdAt: z.string(),
+      updatedAt: z.string(),
+      resolvedAt: z.string().nullable(),
+    }),
+    overdue: z.boolean(),
+    events: z.array(
+      z.object({
+        id: z.string(),
+        kind: z.enum(ticketEventKinds),
+        text: z.string(),
+        at: z.string(),
+      }),
+    ),
+  }),
+}) satisfies z.ZodType<{ detail: ConsoleTicketDetailProps }>;

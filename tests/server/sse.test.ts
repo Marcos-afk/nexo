@@ -172,3 +172,25 @@ describe("event stream", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+describe("presence of the stream", () => {
+  it("registers the connection while the stream is open and releases it on abort", async () => {
+    const connect = vi.fn(() => vi.fn());
+    const controller = new AbortController();
+    const reader = createEventStream({
+      bus: createEventBus<RealtimeEvent>(BUFFER),
+      audience: ANA,
+      lastEventId: null,
+      signal: controller.signal,
+      presence: { connect },
+    }).getReader();
+    const release = connect.mock.results[0]?.value;
+
+    await reader.read();
+    controller.abort();
+    await reader.read();
+
+    expect(connect).toHaveBeenCalledExactlyOnceWith("emp-ana");
+    expect(release).toHaveBeenCalledOnce();
+  });
+});
