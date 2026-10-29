@@ -1,7 +1,9 @@
 import { NexoMark } from "@/components/ui/nexo-mark";
 import type { LoginStatsView } from "@/models/stats";
+import { getContainer } from "@/server/container";
+import { formatLoginStats } from "@/utils/format-login-stats";
 
-interface ShowcasePanelProps {
+interface ShowcaseViewProps {
   readonly stats: LoginStatsView;
 }
 
@@ -54,7 +56,7 @@ function ConversationPreview() {
   );
 }
 
-export function ShowcasePanel({ stats }: ShowcasePanelProps) {
+export function ShowcaseView({ stats }: ShowcaseViewProps) {
   return (
     <aside className="hidden w-[55%] max-w-200 shrink-0 flex-col justify-between overflow-hidden bg-ink px-16 pt-10 pb-12 lg:flex">
       <div className="flex items-center gap-2.5 text-white">
@@ -85,4 +87,11 @@ export function ShowcasePanel({ stats }: ShowcasePanelProps) {
       </div>
     </aside>
   );
+}
+
+export async function ShowcasePanel() {
+  const { stats } = await getContainer();
+  const loginStats = await stats.loginStats().catch(() => null);
+
+  return <ShowcaseView stats={formatLoginStats(loginStats)} />;
 }

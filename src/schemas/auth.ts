@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { employeeRoles } from "@/domain/employee";
-import type { LoginResponseProps } from "@/models/auth";
+import type { ForgotPasswordResponseProps, LoginResponseProps } from "@/models/auth";
 
 export const EMPTY_EMAIL_MESSAGE = "Informe seu e-mail corporativo.";
 export const INVALID_EMAIL_MESSAGE = "Digite um e-mail válido, como nome@nexo.com.br.";
@@ -23,3 +23,9 @@ export const loginResponseSchema = z.object({
 }) satisfies z.ZodType<LoginResponseProps>;
 
 export const logoutResponseSchema = z.void();
+
+export const forgotPasswordSchema = z.object({ email: loginSchema.shape.email });
+
+export const forgotPasswordResponseSchema = z.object({
+  requested: z.literal(true),
+}) satisfies z.ZodType<ForgotPasswordResponseProps>;

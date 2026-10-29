@@ -14,6 +14,14 @@ export interface LoginFormValues {
   remember: boolean;
 }
 
+export interface ForgotPasswordFormValues {
+  email: string;
+}
+
+export interface ForgotPasswordResponseProps {
+  readonly requested: true;
+}
+
 export interface LoginResponseProps {
   readonly user: AuthUserProps;
 }

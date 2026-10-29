@@ -1,9 +1,11 @@
 "use client";
 
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import Link from "next/link";
 import type { FieldErrors, UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FORGOT_PASSWORD_PATH } from "@/constants/routes";
 import type { LoginFormValues } from "@/models/auth";
 import { useLogin } from "@/viewmodels/use-login";
 
@@ -56,7 +58,12 @@ function PasswordField({ form, errors, showPassword, onToggleShowPassword }: Pas
         <label htmlFor="password" className={LABEL_CLASS}>
           Senha
         </label>
-        <span className="text-sm font-semibold text-primary-text">Esqueci minha senha</span>
+        <Link
+          href={FORGOT_PASSWORD_PATH}
+          className="text-sm font-semibold text-primary-text hover:underline"
+        >
+          Esqueci minha senha
+        </Link>
       </div>
       <Input.Root state={error ? "invalid" : "default"}>
         <Input.Icon>
