@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ConversationMode } from "./conversation";
+import type { AnalystLevel } from "./employee";
 import { handoffUrgencies } from "./sla";
 
 export const handoffActions = ["transfer", "assume", "return", "close", "reply"] as const;
@@ -31,7 +32,15 @@ export const handoffInputSchema = z.object({
 
 export type HandoffInput = z.infer<typeof handoffInputSchema>;
 
-export const transferredMessage = "Transferida para o suporte · agent pausado";
+export interface HandoffRequest extends HandoffInput {
+  readonly level?: AnalystLevel;
+}
+
+export const levelOf = ({ level, urgency }: HandoffRequest): AnalystLevel =>
+  level ?? (urgency === "urgent" ? "N2" : "N1");
+
+export const transferredMessage = (level: AnalystLevel): string =>
+  `Transferida para Suporte ${level} · agent pausado`;
 export const returnedMessage = "Devolvida ao agent";
 export const closedMessage = "Atendimento encerrado";
 export const assumedMessage = (analystName: string): string =>

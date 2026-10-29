@@ -93,3 +93,18 @@ export const avatarToneOf = (seed: string): AvatarToneProps => {
     }
   );
 };
+
+export const clockTimeOf = (iso: string): string => timeFormat.format(new Date(iso));
+
+export const dayKeyOfIso = (iso: string): string => dayKeyOf(new Date(iso));
+
+export const dayLabelOf = (iso: string, now: Date): string => {
+  const date = new Date(iso);
+  const yesterday = new Date(now.getTime() - DAY_COUNT_PER_STEP * MS_PER_DAY);
+
+  if (dayKeyOf(date) === dayKeyOf(now)) {
+    return "Hoje";
+  }
+
+  return dayKeyOf(date) === dayKeyOf(yesterday) ? "Ontem" : dayFormat.format(date);
+};

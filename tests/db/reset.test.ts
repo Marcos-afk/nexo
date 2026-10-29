@@ -10,7 +10,7 @@ import { createSeededDatabase } from "../support/database";
 const IN_MEMORY_URL = ":memory:";
 const SEEDED_DRAFT = "D-381";
 const SEEDED_TICKETS = 8;
-const SEEDED_EMPLOYEES = 8;
+const SEEDED_EMPLOYEES = 9;
 
 const rebuild = async (database: Awaited<ReturnType<typeof createSeededDatabase>>) => {
   await resetDatabase(database);

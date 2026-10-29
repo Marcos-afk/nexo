@@ -1,18 +1,10 @@
-import { toConsoleDto } from "@/app/api/dto";
-import { ConsolePanel } from "@/components/features/console/console-panel";
-import type { ConsoleProps } from "@/models/console";
-import { getContainer } from "@/server/container";
-import { findSession } from "@/server/session";
+import { EMPTY_PANE_HINT, EMPTY_PANE_TITLE } from "@/constants/console";
 
-async function fetchConsole(): Promise<ConsoleProps | null> {
-  const { auth, console: consoleService } = await getContainer();
-  const session = await findSession(auth);
-
-  return session ? toConsoleDto(await consoleService.list(session.user.id)) : null;
-}
-
-export default async function Console() {
-  const initial = await fetchConsole();
-
-  return initial && <ConsolePanel initial={initial} />;
+export default function ConsoleEmptyPane() {
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-1 bg-desk px-6 text-center">
+      <p className="text-sm font-semibold text-ink">{EMPTY_PANE_TITLE}</p>
+      <p className="text-xs text-ink-3">{EMPTY_PANE_HINT}</p>
+    </div>
+  );
 }
