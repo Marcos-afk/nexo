@@ -38,9 +38,22 @@ describe("proxy", () => {
   });
 
   it.each([
+    { path: "/esqueci-minha-senha", cookie: undefined, target: null },
+    { path: "/esqueci-minha-senha", cookie: "abc", target: "http://localhost:3000/" },
+    { path: "/privacidade", cookie: undefined, target: null },
+    { path: "/privacidade", cookie: "abc", target: null },
+  ])("$path with cookie=$cookie goes to $target", ({ path, cookie, target }) => {
+    const response = proxy(requestTo(path, cookie));
+
+    expect(response.headers.get("location")).toBe(target);
+  });
+
+  it.each([
     { path: "/", guarded: true },
     { path: "/perfil", guarded: true },
     { path: "/login", guarded: true },
+    { path: "/esqueci-minha-senha", guarded: true },
+    { path: "/privacidade", guarded: true },
     { path: "/api/chat", guarded: false },
     { path: "/_next/static/chunk.js", guarded: false },
     { path: "/favicon.ico", guarded: false },
