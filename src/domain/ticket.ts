@@ -10,6 +10,15 @@ export const ticketStatuses = [
   "resolved",
 ] as const;
 
+export const ticketStatusLabels = {
+  open: "Aberto",
+  in_progress: "Em andamento",
+  awaiting_analyst: "Aguardando analista",
+  in_service: "Em atendimento",
+  approved: "Aprovado",
+  resolved: "Resolvido",
+} as const satisfies Record<(typeof ticketStatuses)[number], string>;
+
 export const ticketEventKinds = [
   "created",
   "updated",

@@ -2,7 +2,7 @@ import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { draftModes } from "../../../domain/conversation";
 import { draftInputSchema } from "../../../domain/draft";
-import { computeDueAt } from "../../../domain/sla";
+import { computeDueAt, formatOfficeDateTime } from "../../../domain/sla";
 import { createTicketInputSchema } from "../../../domain/ticket-input";
 import { readConversationId, readEmployeeId } from "../../request-context";
 import { type AgentToolDeps, failureSchema, runTool, withFailure } from "./tool-support";
@@ -33,7 +33,7 @@ export const createBuildDraftTool = ({ drafts, clock }: AgentToolDeps) =>
         draftId: z.string(),
         mode: z.enum(draftModes),
         status: z.literal("pending"),
-        dueAt: z.string().nullable(),
+        dueAt: z.string().nullable().describe("Horário de Brasília, já formatado"),
       }),
     ),
     execute: (input, { requestContext }) => {
@@ -56,7 +56,7 @@ export const createBuildDraftTool = ({ drafts, clock }: AgentToolDeps) =>
           status: "pending" as const,
           dueAt:
             parsed.data.mode === "create"
-              ? computeDueAt(parsed.data.ticket.priority, clock.now()).toISOString()
+              ? formatOfficeDateTime(computeDueAt(parsed.data.ticket.priority, clock.now()))
               : null,
         };
       });

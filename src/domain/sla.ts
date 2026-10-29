@@ -110,3 +110,14 @@ export const computeContactDueAt = (urgency: HandoffUrgency, transferredAt: Date
 };
 
 export const isOverdue = (dueAt: Date, now: Date): boolean => now.getTime() > dueAt.getTime();
+
+const TWO_DIGITS = 2;
+
+const twoDigits = (value: number): string => String(value).padStart(TWO_DIGITS, "0");
+
+export const formatOfficeDateTime = (date: Date): string => {
+  const local = new Date(date.getTime() + OFFICE_UTC_OFFSET_MS);
+  const day = `${twoDigits(local.getUTCDate())}/${twoDigits(local.getUTCMonth() + 1)}/${local.getUTCFullYear()}`;
+
+  return `${day} às ${twoDigits(local.getUTCHours())}:${twoDigits(local.getUTCMinutes())}`;
+};
