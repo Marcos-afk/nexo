@@ -3,8 +3,10 @@ import type { Database } from "../../db/client";
 import { conversations, messages } from "../../db/schema";
 import type { MessageAuthorKind } from "../../domain/conversation";
 import { ConversationClosedError, ConversationNotFoundError } from "../../domain/errors";
+import type { EventPublisher } from "../../domain/realtime";
 import type { Clock } from "../../lib/clock";
 import type { IdGenerator } from "../../lib/ids";
+import { announceConversation, announceMessage } from "./announcements";
 
 export type Conversation = typeof conversations.$inferSelect;
 export type Message = typeof messages.$inferSelect;
@@ -13,6 +15,7 @@ export interface ConversationServiceDeps {
   readonly database: Database;
   readonly clock: Clock;
   readonly ids: IdGenerator;
+  readonly events?: EventPublisher;
 }
 
 export interface ConversationRef {
@@ -60,9 +63,10 @@ export const getActiveConversation = async (
 };
 
 export const startConversation = async (
-  { database, clock, ids }: ConversationServiceDeps,
+  deps: ConversationServiceDeps,
   ownerId: string,
 ): Promise<Conversation> => {
+  const { database, clock, ids } = deps;
   const now = clock.now();
   const conversation: Conversation = {
     id: ids.next(),
@@ -78,6 +82,7 @@ export const startConversation = async (
   };
 
   await database.insert(conversations).values(conversation);
+  announceConversation(deps, conversation);
 
   return conversation;
 };
@@ -150,12 +155,12 @@ export const insertMessage = async (
   return message;
 };
 
-export const appendMessage = (
+export const appendMessage = async (
   deps: ConversationServiceDeps,
   ref: ConversationRef,
   input: AppendMessageInput,
-): Promise<Message> =>
-  deps.database.transaction(async (transaction) => {
+): Promise<Message> => {
+  const message = await deps.database.transaction(async (transaction) => {
     const conversation = await requireOwned(transaction, ref);
 
     if (conversation.mode === "closed") {
@@ -171,10 +176,16 @@ export const appendMessage = (
     });
   });
 
+  announceMessage(deps, ref.ownerId, message);
+
+  return message;
+};
+
 export const closeConversation = async (
-  { database, clock }: ConversationServiceDeps,
+  deps: ConversationServiceDeps,
   ref: ConversationRef,
 ): Promise<Conversation> => {
+  const { database, clock } = deps;
   const conversation = await requireOwned(database, ref);
   const closed: Conversation = { ...conversation, mode: "closed", updatedAt: clock.now() };
 
@@ -182,6 +193,7 @@ export const closeConversation = async (
     .update(conversations)
     .set({ mode: closed.mode, updatedAt: closed.updatedAt })
     .where(eq(conversations.id, conversation.id));
+  announceConversation(deps, closed);
 
   return closed;
 };

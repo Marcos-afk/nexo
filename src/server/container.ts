@@ -4,8 +4,10 @@ import type { ChatOrchestratorDeps } from "../conversation/chat-orchestrator";
 import { createHealthReporter, type HealthReporter } from "../conversation/health-report";
 import { createModelHealth } from "../conversation/model-health";
 import { createDatabase, migrateDatabase } from "../db/client";
+import type { RealtimeEvent } from "../domain/realtime";
 import { env } from "../env";
 import { systemClock } from "../lib/clock";
+import { createEventBus, type EventBus } from "../lib/event-bus";
 import { uuidGenerator } from "../lib/ids";
 import { createLogger, stdoutWrite } from "../lib/logger";
 import { triageAgent } from "../mastra/agents/triage-agent";
@@ -21,6 +23,7 @@ import { createTicketService } from "../services/tickets/ticket-service";
 
 const DEPS_CACHE_KEY = "service-deps";
 const MS_PER_SECOND = 1000;
+const EVENT_BUFFER_CAPACITY = 200;
 
 interface CachedDeps {
   readonly container: Promise<Container>;
@@ -46,6 +49,7 @@ export interface Container {
   readonly auth: AuthService;
   readonly stats: StatsService;
   readonly health: HealthReporter;
+  readonly events: EventBus<RealtimeEvent>;
 }
 
 const createContainer = async (): Promise<Container> => {
@@ -54,10 +58,12 @@ const createContainer = async (): Promise<Container> => {
 
   await migrateDatabase(database);
 
+  const events = createEventBus<RealtimeEvent>(EVENT_BUFFER_CAPACITY);
   const conversations: ConversationServiceDeps = {
     database,
     clock: systemClock,
     ids: uuidGenerator,
+    events: { publish: (event) => void events.publish(event) },
   };
   const { guard: legacy, outage } = createLegacy();
   const modelHealth = createModelHealth(systemClock);
@@ -80,6 +86,7 @@ const createContainer = async (): Promise<Container> => {
     auth: createAuthService(conversations),
     stats: createStatsService({ database, clock: systemClock }),
     health: createHealthReporter({ modelHealth, ticketSystem: outage, clock: systemClock }),
+    events,
   };
 };
 
