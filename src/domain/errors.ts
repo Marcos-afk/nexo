@@ -210,3 +210,20 @@ export class TicketNotReopenableError extends Error {
     this.name = "TicketNotReopenableError";
   }
 }
+
+export class UnknownEmployeeError extends Error {
+  public constructor(options?: ErrorOptions) {
+    super(
+      "Não encontramos esse e-mail entre os funcionários. Confira o endereço e tente de novo.",
+      options,
+    );
+    this.name = "UnknownEmployeeError";
+  }
+}
+
+export class UnauthenticatedError extends Error {
+  public constructor(options?: ErrorOptions) {
+    super("Entre com o seu e-mail corporativo para continuar.", options);
+    this.name = "UnauthenticatedError";
+  }
+}

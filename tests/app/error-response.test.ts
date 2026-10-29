@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toErrorResponse } from "../../src/app/api/chat/error-response";
+import { respondWith, toErrorResponse } from "../../src/app/api/error-response";
 import {
   ConversationClosedError,
   MissingEmployeeContextError,
@@ -7,6 +7,8 @@ import {
   ModelUnavailableError,
   SessionMessageLimitReachedError,
   TriageOutputInvalidError,
+  UnauthenticatedError,
+  UnknownEmployeeError,
 } from "../../src/domain/errors";
 
 describe("toErrorResponse", () => {
@@ -21,6 +23,8 @@ describe("toErrorResponse", () => {
     { error: new TriageOutputInvalidError(), status: 502, code: "triage_output_invalid" },
     { error: new MissingEmployeeContextError(), status: 401, code: "missing_employee_context" },
     { error: new ConversationClosedError("c-1"), status: 409, code: "conversation_closed" },
+    { error: new UnauthenticatedError(), status: 401, code: "unauthenticated" },
+    { error: new UnknownEmployeeError(), status: 401, code: "unknown_employee" },
   ])("maps $code to $status", async ({ error, status, code }) => {
     const response = toErrorResponse(error);
 
@@ -37,5 +41,23 @@ describe("toErrorResponse", () => {
   it("leaves unknown errors to the caller", () => {
     expect(toErrorResponse(new Error("boom"))).toBeNull();
     expect(toErrorResponse("boom")).toBeNull();
+  });
+});
+
+describe("respondWith", () => {
+  it("returns the response of the action", async () => {
+    const response = await respondWith(() => Promise.resolve(new Response("ok")));
+
+    expect(await response.text()).toBe("ok");
+  });
+
+  it("turns a known error into its HTTP response", async () => {
+    const response = await respondWith(() => Promise.reject(new UnauthenticatedError()));
+
+    expect(response.status).toBe(401);
+  });
+
+  it("lets an unknown error through", async () => {
+    await expect(respondWith(() => Promise.reject(new Error("boom")))).rejects.toThrow("boom");
   });
 });
