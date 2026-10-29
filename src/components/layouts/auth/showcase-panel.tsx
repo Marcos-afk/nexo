@@ -39,13 +39,10 @@ function ConversationPreview() {
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-1.5 text-[12.5px]">
           <span className="font-semibold text-white/80">Nexo Assist</span>
-          <span className="text-white/45">
-            consultou seus chamados · criou um chamado
-          </span>
+          <span className="text-white/45">consultou seus chamados · criou um chamado</span>
         </div>
         <p className="w-95 max-w-full rounded-[4px_12px_12px_12px] bg-white/8 px-3.5 py-2.5 text-[13.5px] leading-normal text-white">
-          Pronto: abri o chamado com prioridade alta. Um analista fala com você
-          em até 4 h úteis.
+          Pronto: abri o chamado com prioridade alta. Um analista fala com você em até 4 h úteis.
         </p>
         <div className="flex w-fit items-center gap-2 rounded-xl bg-paper px-3 py-1.5 text-[12.5px]">
           <span className="size-1.75 rounded-full bg-warning" />
@@ -62,9 +59,7 @@ export function ShowcasePanel({ stats }: ShowcasePanelProps) {
     <aside className="hidden w-[55%] max-w-200 shrink-0 flex-col justify-between overflow-hidden bg-ink px-16 pt-10 pb-12 lg:flex">
       <div className="flex items-center gap-2.5 text-white">
         <NexoMark />
-        <span className="text-[17px] font-bold tracking-[-0.2px]">
-          Nexo Assist
-        </span>
+        <span className="text-[17px] font-bold tracking-[-0.2px]">Nexo Assist</span>
       </div>
       <div className="flex flex-col gap-9">
         <div className="flex flex-col gap-4.5">
@@ -75,9 +70,8 @@ export function ShowcasePanel({ stats }: ShowcasePanelProps) {
             Seu problema de TI, resolvido em uma conversa.
           </h1>
           <p className="max-w-130 text-base leading-[1.55] text-white/65">
-            Descreva o que está acontecendo. O assistente consulta seus
-            chamados, busca na central de ajuda e chama um analista quando
-            precisa.
+            Descreva o que está acontecendo. O assistente consulta seus chamados, busca na central
+            de ajuda e chama um analista quando precisa.
           </p>
         </div>
         <div className="pl-24">
@@ -87,12 +81,7 @@ export function ShowcasePanel({ stats }: ShowcasePanelProps) {
       <div className="flex border-t border-white/10 pt-6">
         <Stat value={stats.firstResponse} label="primeira resposta, em média" />
         <Stat value={stats.withoutQueue} label="resolvidos sem fila" bordered />
-        <Stat
-          value={stats.analystsOnline}
-          label="analistas online agora"
-          live
-          bordered
-        />
+        <Stat value={stats.analystsOnline} label="analistas online agora" live bordered />
       </div>
     </aside>
   );

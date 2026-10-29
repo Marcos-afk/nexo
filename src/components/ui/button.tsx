@@ -2,7 +2,7 @@ import { cva, cx } from "class-variance-authority";
 import type { ButtonHTMLAttributes, Ref } from "react";
 
 type ButtonSizeType = "md" | "lg";
-type ButtonVariantType = "primary";
+type ButtonVariantType = "primary" | "ghost";
 
 interface ButtonRootProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSizeType;
@@ -24,6 +24,7 @@ const buttonVariants = cva(
       },
       variant: {
         primary: "bg-cta text-white hover:bg-primary-text",
+        ghost: "bg-transparent text-ink-2 hover:bg-card",
       },
     },
     defaultVariants: { size: "md", variant: "primary" },
