@@ -3,11 +3,12 @@ import type { DraftMode, DraftStatus, MessageAuthorKind } from "@/domain/convers
 import type { StoredDraft } from "@/domain/draft";
 import type { AnalystLevel } from "@/domain/employee";
 import { computeDueAt, type TicketPriority } from "@/domain/sla";
-import type { Ticket, TicketStatus, TicketType } from "@/domain/ticket";
+import type { Ticket, TicketEventKind, TicketStatus, TicketType } from "@/domain/ticket";
 import type { CreateTicketInput } from "@/domain/ticket-input";
 import { parseToolTrace, type ToolTraceEntry } from "@/domain/tool-trace";
 import type { ConsoleConversation } from "@/services/console/console-conversation";
 import type { ConsoleItem, ConsoleOverview } from "@/services/console/console-service";
+import type { ConsoleTicketDetail, ConversationTickets } from "@/services/console/console-tickets";
 import type { Decision } from "@/services/decisions/decision-service";
 import type { Draft, DraftDetails } from "@/services/drafts/draft-service";
 
@@ -129,7 +130,11 @@ export type ConsoleLabelDto =
       readonly ticketNumber: string | null;
       readonly contactDueAt: string | null;
     }
-  | { readonly kind: "agent_asked_help"; readonly confidence: number }
+  | {
+      readonly kind: "agent_asked_help";
+      readonly confidence: number;
+      readonly decisionMessageId: string;
+    }
   | { readonly kind: "agent_active" }
   | { readonly kind: "resolved_by_agent" }
   | { readonly kind: "closed" }
@@ -205,8 +210,11 @@ export interface ConsoleConversationDto {
   readonly id: string;
   readonly viewerId: string;
   readonly employee: ConsoleConversation["employee"];
+  readonly employeeOnline: boolean;
   readonly mode: ConsoleConversation["mode"];
   readonly handoffLevel: AnalystLevel | null;
+  readonly handoffReason: string | null;
+  readonly handoffSummary: string | null;
   readonly contactDueAt: string | null;
   readonly ticket: ConsoleConversation["ticket"];
   readonly assignedAnalyst: ConsoleConversation["assignedAnalyst"];
@@ -219,8 +227,11 @@ export const toConsoleConversationDto = (
   id: conversation.id,
   viewerId: conversation.viewerId,
   employee: conversation.employee,
+  employeeOnline: conversation.employeeOnline,
   mode: conversation.mode,
   handoffLevel: conversation.handoffLevel,
+  handoffReason: conversation.handoffReason,
+  handoffSummary: conversation.handoffSummary,
   contactDueAt: conversation.contactDueAt?.toISOString() ?? null,
   ticket: conversation.ticket,
   assignedAnalyst: conversation.assignedAnalyst,
@@ -228,4 +239,66 @@ export const toConsoleConversationDto = (
     ...message,
     createdAt: message.createdAt.toISOString(),
   })),
+});
+
+export interface ConsoleTicketItemDto {
+  readonly number: string;
+  readonly title: string;
+  readonly status: TicketStatus;
+  readonly priority: TicketPriority;
+  readonly dueAt: string;
+  readonly updatedAt: string;
+  readonly overdue: boolean;
+  readonly isCurrent: boolean;
+  readonly lastEvent: { readonly text: string; readonly at: string } | null;
+}
+
+export interface ConversationTicketsDto {
+  readonly employeeName: string;
+  readonly open: number;
+  readonly closed: number;
+  readonly tickets: readonly ConsoleTicketItemDto[];
+}
+
+export interface ConsoleTicketDetailDto {
+  readonly ticket: TicketDto;
+  readonly overdue: boolean;
+  readonly events: readonly {
+    readonly id: string;
+    readonly kind: TicketEventKind;
+    readonly text: string;
+    readonly at: string;
+  }[];
+}
+
+export const toConversationTicketsDto = ({
+  employeeName,
+  open,
+  closed,
+  tickets,
+}: ConversationTickets): ConversationTicketsDto => ({
+  employeeName,
+  open,
+  closed,
+  tickets: tickets.map(({ ticket, overdue, isCurrent, lastEvent }) => ({
+    number: ticket.number,
+    title: ticket.title,
+    status: ticket.status,
+    priority: ticket.priority,
+    dueAt: ticket.dueAt.toISOString(),
+    updatedAt: ticket.updatedAt.toISOString(),
+    overdue,
+    isCurrent,
+    lastEvent: lastEvent ? { text: lastEvent.text, at: lastEvent.at.toISOString() } : null,
+  })),
+});
+
+export const toConsoleTicketDetailDto = ({
+  ticket,
+  overdue,
+  events,
+}: ConsoleTicketDetail): ConsoleTicketDetailDto => ({
+  ticket: toTicketDto(ticket),
+  overdue,
+  events: events.map((event) => ({ ...event, at: event.at.toISOString() })),
 });

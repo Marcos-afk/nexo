@@ -13,6 +13,7 @@ export const GET = withSession((request, { container, session }) =>
         audience: { id: session.user.id, role: session.user.role },
         lastEventId: parseLastEventId(request.headers.get(LAST_EVENT_ID_HEADER)),
         signal: request.signal,
+        presence: container.presence,
       }),
       { headers: SSE_HEADERS },
     ),

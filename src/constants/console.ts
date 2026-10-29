@@ -76,4 +76,42 @@ export const MODE_BADGE_TONES = {
   closed: "neutral",
 } as const satisfies Record<ConversationMode, ConsoleLabelViewProps["tone"]>;
 
-export const conversationHrefOf = (id: string): string => `/console/${id}`;
+export const conversationHrefOf = (id: string, decisionMessageId?: string): string =>
+  decisionMessageId === undefined
+    ? `/console/${id}`
+    : `/console/${id}?decision=${encodeURIComponent(decisionMessageId)}`;
+
+export const ticketsPathOf = (conversationId: string): string =>
+  `${conversationPathOf(conversationId)}/tickets`;
+export const ticketPathOf = (conversationId: string, number: string): string =>
+  `${ticketsPathOf(conversationId)}/${number}`;
+export const TICKETS_LOAD_ERROR = "Não foi possível carregar os chamados agora.";
+export const TICKET_LOAD_ERROR = "Não foi possível carregar o chamado agora.";
+export const OPEN_PANEL_LABEL = "Mostrar chamados";
+export const CLOSE_PANEL_LABEL = "Fechar painel de chamados";
+export const THIS_CONVERSATION_LABEL = "Desta conversa";
+export const OTHER_TICKETS_LABEL = "Outros chamados";
+export const NO_TICKETS_LABEL = "Nenhum chamado encontrado.";
+export const NO_EVENT_LABEL = "Sem eventos registrados";
+export const ALL_STATUSES_LABEL = "Todos os status";
+export const BACK_LABEL = "Voltar";
+export const HISTORY_LABEL = "Histórico";
+export const SUMMARY_TITLE = "Resumo do caso";
+export const COPY_SUMMARY_LABEL = "Copiar resumo do caso";
+export const COPY_SUMMARY_DONE = "Resumo do caso copiado.";
+export const COPY_SUMMARY_ERROR = "Não foi possível copiar o resumo.";
+export const MORE_ACTIONS_LABEL = "Mais ações";
+
+export const ticketsTitleOf = (name: string): string => `Chamados de ${name}`;
+export const allTicketsLabelOf = (name: string): string => `Ver todos os chamados de ${name}`;
+export const ticketCountsOf = (open: number, closed: number): string =>
+  `${open} ${open === 1 ? "aberto" : "abertos"} · ${closed} ${closed === 1 ? "encerrado" : "encerrados"}`;
+
+export const SEARCH_CONVERSATION_LABEL = "Buscar na conversa";
+export const SEARCH_CONVERSATION_PLACEHOLDER = "Buscar na conversa";
+export const CLOSE_SEARCH_LABEL = "Fechar busca";
+export const NEXT_MATCH_LABEL = "Próximo resultado";
+export const PREVIOUS_MATCH_LABEL = "Resultado anterior";
+export const NO_MATCHES_LABEL = "Sem resultados";
+export const searchPositionOf = (position: number, total: number): string =>
+  `${position} de ${total}`;

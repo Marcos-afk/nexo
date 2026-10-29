@@ -13,13 +13,13 @@ const setup = async () =>
 describe("getForMessage", () => {
   it("returns the decision of a reply to its owner", async () => {
     const service = await setup();
-    const decision = await service.getForMessage("emp-ana", "m-c-ana-handoff-3");
+    const decision = await service.getForMessage("emp-ana", "m-c-ana-handoff-2");
 
     expect(decision).toMatchObject({ id: "dec-ana-handoff", action: "transfer" });
   });
 
   it.each([
-    ["another employee", "emp-bruno", "m-c-ana-handoff-3"],
+    ["another employee", "emp-bruno", "m-c-ana-handoff-2"],
     ["a message without decision", "emp-ana", "m-c-ana-handoff-1"],
     ["an unknown message", "emp-ana", "m-inexistente"],
   ])("refuses %s", async (_label, ownerId, messageId) => {

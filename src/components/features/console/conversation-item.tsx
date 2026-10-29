@@ -20,7 +20,10 @@ export function ConversationItem({ item, isSelected, now }: ConversationItemProp
   return (
     <li>
       <Link
-        href={conversationHrefOf(item.id)}
+        href={conversationHrefOf(
+          item.id,
+          item.label.kind === "agent_asked_help" ? item.label.decisionMessageId : undefined,
+        )}
         aria-current={isSelected ? "page" : undefined}
         className={cx(
           "flex gap-3 rounded-xl p-2.5 hover:bg-desk focus-visible:outline-2 focus-visible:outline-primary",

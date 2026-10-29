@@ -96,22 +96,36 @@ export const unreadCounts = async (
   return new Map(rows.map(({ conversationId, unread }) => [conversationId, unread]));
 };
 
-export const lastConfidences = async (
+export interface LastDecision {
+  readonly confidence: number;
+  readonly messageId: string;
+}
+
+export const lastDecisions = async (
   database: Database,
   ids: readonly string[],
-): Promise<ReadonlyMap<string, number>> => {
+): Promise<ReadonlyMap<string, LastDecision>> => {
   if (ids.length === 0) {
     return new Map();
   }
 
   const rows = await database
-    .select({ conversationId: messages.conversationId, confidence: decisions.confidence })
+    .select({
+      conversationId: messages.conversationId,
+      confidence: decisions.confidence,
+      messageId: messages.id,
+    })
     .from(decisions)
     .innerJoin(messages, eq(decisions.messageId, messages.id))
     .where(inArray(messages.conversationId, ids))
     .orderBy(desc(messages.createdAt));
 
   return new Map(
-    [...rows].reverse().map(({ conversationId, confidence }) => [conversationId, confidence]),
+    [...rows]
+      .reverse()
+      .map(({ conversationId, confidence, messageId }) => [
+        conversationId,
+        { confidence, messageId },
+      ]),
   );
 };

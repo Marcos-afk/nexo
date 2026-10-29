@@ -72,7 +72,11 @@ describe("console list", () => {
     const { items } = await service.list(ANALYST);
     const byId = new Map(items.map((item) => [item.id, item]));
 
-    expect(byId.get("c-bruno")?.label).toEqual({ kind: "agent_asked_help", confidence: 41 });
+    expect(byId.get("c-bruno")?.label).toEqual({
+      kind: "agent_asked_help",
+      confidence: 41,
+      decisionMessageId: "m-c-bruno-2",
+    });
     expect(byId.get("c-ana-handoff")?.label).toMatchObject({
       kind: "transferred",
       ticketNumber: "INC-20311",

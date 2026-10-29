@@ -75,3 +75,75 @@ export const toEntries = (
         ]
       : [entry];
   });
+
+export const buildCaseSummary = (conversation: ConsoleConversationProps): string =>
+  [
+    `Caso de ${conversation.employee.name} (${conversation.employee.department})`,
+    conversation.ticket
+      ? `Chamado: ${conversation.ticket.number} · ${conversation.ticket.title}`
+      : null,
+    conversation.handoffLevel ? `Transferido para: Suporte ${conversation.handoffLevel}` : null,
+    conversation.handoffReason ? `Motivo: ${conversation.handoffReason}` : null,
+    conversation.handoffSummary,
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n");
+
+export interface TextSegmentProps {
+  readonly start: number;
+  readonly text: string;
+  readonly isMatch: boolean;
+}
+
+const foldChar = (char: string): string =>
+  char.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
+const foldText = (value: string): string => [...value].map(foldChar).join("");
+
+const NO_MATCH_SEGMENTS = (text: string): TextSegmentProps[] => [
+  { start: 0, text, isMatch: false },
+];
+
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[]\]/g, "$&");
+
+export const splitByQuery = (text: string, query: string): TextSegmentProps[] => {
+  const needle = foldText(query.trim());
+  const chars = [...text];
+  const folded = chars.map(foldChar);
+
+  if (needle === "" || folded.some((char) => char.length !== 1)) {
+    return NO_MATCH_SEGMENTS(text);
+  }
+
+  const matches = [...folded.join("").matchAll(new RegExp(escapeRegExp(needle), "g"))];
+  const bounds = [
+    0,
+    ...matches.flatMap((match) => [match.index, match.index + needle.length]),
+    chars.length,
+  ];
+
+  return bounds
+    .slice(0, -1)
+    .map((from, position) => ({
+      start: from,
+      text: chars.slice(from, bounds[position + 1]).join(""),
+      isMatch: position % 2 === 1,
+    }))
+    .filter((segment) => segment.text !== "");
+};
+
+export const matchingMessageIds = (
+  messages: readonly ConsoleMessageProps[],
+  query: string,
+): string[] => {
+  const needle = foldText(query.trim());
+
+  return needle === ""
+    ? []
+    : messages
+        .filter(
+          (message) =>
+            message.authorKind !== "system" && foldText(message.content).includes(needle),
+        )
+        .map((message) => message.id);
+};

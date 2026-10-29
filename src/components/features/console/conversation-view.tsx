@@ -1,47 +1,62 @@
 "use client";
 
+import { useState } from "react";
 import type { ConsoleConversationProps } from "@/models/console";
-import { isAssignedToViewer, needsCloseConfirmation } from "@/utils/console-conversation";
 import { useConsoleConversation, useMarkRead } from "@/viewmodels/use-console-conversation";
 import { useConversationActions } from "@/viewmodels/use-conversation-actions";
-import { AttendanceActions } from "./attendance-actions";
-import { AttendanceBar } from "./attendance-bar";
+import { useConversationSearch } from "@/viewmodels/use-conversation-search";
+import { CaseSummary } from "./case-summary";
+import { ConversationActions } from "./conversation-actions";
+import { ConversationFooter } from "./conversation-footer";
 import { ConversationHeader } from "./conversation-header";
 import { ConversationMessages } from "./conversation-messages";
-import { ReplyComposer } from "./reply-composer";
+import { ConversationSearch } from "./conversation-search";
+import { TicketsPanel } from "./tickets-panel";
 
 interface ConversationViewProps {
   readonly initial: ConsoleConversationProps;
+  readonly decisionMessageId: string | null;
 }
 
-export function ConversationView({ initial }: ConversationViewProps) {
+export function ConversationView({ initial, decisionMessageId }: ConversationViewProps) {
   const { conversation, refresh } = useConsoleConversation(initial);
   const actions = useConversationActions({ conversationId: conversation.id, onDone: refresh });
-  const isMine = isAssignedToViewer(conversation);
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const search = useConversationSearch(conversation.messages);
 
   useMarkRead(conversation);
 
   return (
-    <div className="flex h-full flex-col">
-      <ConversationHeader
-        conversation={conversation}
-        actions={
-          isMine && (
-            <AttendanceActions
+    <div className="flex h-full">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <ConversationHeader
+          conversation={conversation}
+          actions={
+            <ConversationActions
+              conversation={conversation}
               actions={actions}
-              needsConfirmation={needsCloseConfirmation(conversation)}
+              isPanelOpen={isPanelOpen}
+              onTogglePanel={() => setIsPanelOpen((current) => !current)}
+              onSearch={search.onOpen}
             />
-          )
-        }
-      />
-      <ConversationMessages
-        messages={conversation.messages}
-        employeeName={conversation.employee.name}
-      />
-      <footer className="flex flex-col gap-3 border-t border-rule px-6 py-4">
-        <AttendanceBar conversation={conversation} actions={actions} />
-        <ReplyComposer isLocked={!isMine} isBusy={actions.isBusy} onSend={actions.onReply} />
-      </footer>
+          }
+        />
+        {search.isOpen && <ConversationSearch {...search} />}
+        <CaseSummary conversation={conversation} />
+        <ConversationMessages
+          messages={conversation.messages}
+          employeeName={conversation.employee.name}
+          focus={{
+            highlightQuery: search.highlightQuery,
+            activeMessageId: search.activeMessageId,
+            decisionMessageId,
+          }}
+        />
+        <ConversationFooter conversation={conversation} actions={actions} />
+      </div>
+      {isPanelOpen && (
+        <TicketsPanel conversationId={conversation.id} onClose={() => setIsPanelOpen(false)} />
+      )}
     </div>
   );
 }

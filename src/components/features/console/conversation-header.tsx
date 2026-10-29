@@ -29,7 +29,15 @@ export function ConversationHeader({ conversation, actions }: ConversationHeader
         <h1 className="truncate text-lg font-bold tracking-tight text-ink">
           {conversation.employee.name}
         </h1>
-        <p className="truncate text-xs text-ink-3">{subtitle}</p>
+        <p className="flex items-center gap-1.5 truncate text-xs text-ink-3">
+          {conversation.employeeOnline && (
+            <span className="flex items-center gap-1 font-semibold text-success-text">
+              <span aria-hidden="true" className="size-1.5 rounded-full bg-success" />
+              online
+            </span>
+          )}
+          {subtitle}
+        </p>
       </div>
       <div className="flex items-center gap-1.5">
         <Badge.Root tone={badge.tone}>{badge.text}</Badge.Root>

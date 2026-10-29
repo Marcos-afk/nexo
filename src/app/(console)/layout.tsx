@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { Rail } from "@/components/layouts/console/rail";
+import { ConsoleEventsProvider } from "@/providers/console-events-provider";
 import { ConsoleStateProvider } from "@/providers/console-state-provider";
 import { getContainer } from "@/server/container";
 import { findSession } from "@/server/session";
@@ -26,10 +27,12 @@ export default async function ConsoleLayout({ children }: ConsoleLayoutProps) {
 
   return (
     <ConsoleStateProvider initialAttention={overview.attention}>
-      <div className="flex h-screen overflow-hidden bg-paper">
-        <Rail me={overview.me} />
-        <main className="min-w-0 flex-1">{children}</main>
-      </div>
+      <ConsoleEventsProvider>
+        <div className="flex h-screen overflow-hidden bg-paper">
+          <Rail me={overview.me} />
+          <main className="min-w-0 flex-1">{children}</main>
+        </div>
+      </ConsoleEventsProvider>
     </ConsoleStateProvider>
   );
 }

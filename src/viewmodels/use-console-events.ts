@@ -1,12 +1,11 @@
 import { useEffect, useEffectEvent } from "react";
-import { EVENTS_ENDPOINT } from "@/constants/chat";
 import { REFRESH_THROTTLE_MS } from "@/constants/console";
+import { useConsoleEventsContext } from "@/providers/console-events-provider";
 import { eventSignalSchema } from "@/schemas/console";
 import { parseEventData } from "@/utils/parse-event";
 
-const REFRESH_EVENTS = ["message.created", "conversation.updated", "resync"] as const;
-
 export function useConsoleEvents(onChange: () => void, conversationId?: string) {
+  const { subscribe } = useConsoleEventsContext();
   const notify = useEffectEvent(onChange);
   const isRelevant = useEffectEvent((raw: unknown): boolean => {
     if (conversationId === undefined) {
@@ -19,10 +18,9 @@ export function useConsoleEvents(onChange: () => void, conversationId?: string) 
   });
 
   useEffect(() => {
-    const source = new EventSource(EVENTS_ENDPOINT);
     const state = { timer: null as ReturnType<typeof setTimeout> | null };
-    const schedule = (event: MessageEvent) => {
-      if (state.timer !== null || !isRelevant(event.data)) {
+    const unsubscribe = subscribe((raw) => {
+      if (state.timer !== null || !isRelevant(raw)) {
         return;
       }
 
@@ -30,18 +28,14 @@ export function useConsoleEvents(onChange: () => void, conversationId?: string) 
         state.timer = null;
         notify();
       }, REFRESH_THROTTLE_MS);
-    };
-
-    for (const type of REFRESH_EVENTS) {
-      source.addEventListener(type, schedule);
-    }
+    });
 
     return () => {
-      source.close();
+      unsubscribe();
 
       if (state.timer !== null) {
         clearTimeout(state.timer);
       }
     };
-  }, []);
+  }, [subscribe]);
 }
