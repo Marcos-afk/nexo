@@ -34,4 +34,14 @@ export const seedEmployees: readonly NewEmployee[] = [
     availability: "online",
     passwordChangedAt: new Date("2026-10-01T09:30:00-03:00"),
   },
+  {
+    id: "analyst-lia",
+    name: "Lia Torres",
+    email: "lia@nexo.test",
+    department: "Service Desk",
+    role: "analyst",
+    level: "N1",
+    availability: "offline",
+    passwordChangedAt: new Date("2026-09-12T10:00:00-03:00"),
+  },
 ];

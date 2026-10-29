@@ -1,4 +1,5 @@
 import type { ConversationMode } from "../../domain/conversation";
+import type { AnalystLevel } from "../../domain/employee";
 import type { conversations, decisions, drafts, messages } from "../schema";
 
 type NewConversation = typeof conversations.$inferInsert;
@@ -15,6 +16,7 @@ interface ConversationSeed {
   readonly ticketId?: string;
   readonly handoffReason?: string;
   readonly handoffSummary?: string;
+  readonly handoffLevel?: AnalystLevel;
   readonly contactDueAt?: string;
   readonly lines: readonly (readonly [author: "employee" | "agent", content: string])[];
 }
@@ -34,6 +36,7 @@ const conversationSeeds: readonly ConversationSeed[] = [
     updatedAt: "2026-10-28T09:40:00-03:00",
     ticketId: "t-inc-20311",
     handoffReason: "Pedido do funcionário",
+    handoffLevel: "N1",
     handoffSummary:
       "Ana pediu um atendente sobre o INC-20311 (notebook lento após a atualização do Windows). O agent já sugeriu reiniciar e liberar espaço em disco, sem sucesso.",
     contactDueAt: "2026-10-28T12:05:00-03:00",
@@ -61,6 +64,7 @@ const conversationSeeds: readonly ConversationSeed[] = [
     createdAt: "2026-10-28T09:35:00-03:00",
     updatedAt: "2026-10-28T09:43:00-03:00",
     handoffReason: "Pedido urgente de acesso",
+    handoffLevel: "N2",
     handoffSummary: "Carla precisa de acesso ao SAP ainda hoje para o fechamento.",
     contactDueAt: "2026-10-28T10:08:00-03:00",
     lines: [
@@ -75,6 +79,7 @@ const conversationSeeds: readonly ConversationSeed[] = [
     createdAt: "2026-10-28T09:10:00-03:00",
     updatedAt: "2026-10-28T09:25:00-03:00",
     handoffReason: "Baixa confiança do agent (41%)",
+    handoffLevel: "N2",
     handoffSummary:
       "Bruno descreveu uma falha intermitente que o agent não conseguiu classificar com segurança.",
     contactDueAt: "2026-10-28T11:43:00-03:00",
@@ -137,6 +142,7 @@ const toConversation = (seed: ConversationSeed): NewConversation => ({
   mode: seed.mode,
   handoffReason: seed.handoffReason ?? null,
   handoffSummary: seed.handoffSummary ?? null,
+  handoffLevel: seed.handoffLevel ?? null,
   contactDueAt: seed.contactDueAt ? new Date(seed.contactDueAt) : null,
   ticketId: seed.ticketId ?? null,
   createdAt: new Date(seed.createdAt),

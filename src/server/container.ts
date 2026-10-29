@@ -85,7 +85,7 @@ const createContainer = async (): Promise<Container> => {
     chat,
     auth: createAuthService({ ...conversations, logger }),
     stats: createStatsService({ database, clock: systemClock }),
-    console: createConsoleService({ database }),
+    console: createConsoleService(conversations),
     health: createHealthReporter({ modelHealth, ticketSystem: outage, clock: systemClock }),
     events,
   };

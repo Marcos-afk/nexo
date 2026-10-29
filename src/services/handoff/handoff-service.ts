@@ -1,4 +1,4 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import type { Database } from "../../db/client";
 import { conversations, employees, tickets } from "../../db/schema";
 import type { ConversationMode } from "../../domain/conversation";
@@ -12,6 +12,8 @@ import {
   closedMessage,
   type HandoffAction,
   type HandoffInput,
+  type HandoffRequest,
+  levelOf,
   nextConversationMode,
   returnedMessage,
   transferredMessage,
@@ -99,13 +101,25 @@ const requireOwnedConversation = async (
   return conversation;
 };
 
+interface Transition {
+  readonly previous: Conversation;
+  readonly next: Conversation;
+}
+
 const applyTransition = async (
   deps: HandoffServiceDeps,
-  updated: Conversation,
+  { previous, next: updated }: Transition,
   content: string,
 ): Promise<void> => {
   const message = await deps.database.transaction(async (transaction) => {
-    await transaction.update(conversations).set(updated).where(eq(conversations.id, updated.id));
+    const result = await transaction
+      .update(conversations)
+      .set(updated)
+      .where(and(eq(conversations.id, updated.id), eq(conversations.mode, previous.mode)));
+
+    if (result.rowsAffected === 0) {
+      throw new ConversationAssignedToOtherError(updated.id);
+    }
 
     return insertMessage(transaction, deps, {
       conversationId: updated.id,
@@ -142,7 +156,7 @@ export const requestHandoff = async (
   deps: HandoffServiceDeps,
   ownerId: string,
   conversationId: string,
-  input: HandoffInput,
+  input: HandoffRequest,
 ): Promise<Conversation> => {
   const conversation = await requireOwnedConversation(deps.database, ownerId, conversationId);
   const mode = targetMode(conversation, "transfer");
@@ -158,12 +172,17 @@ export const requestHandoff = async (
     mode,
     handoffReason: input.reason,
     handoffSummary: input.summary,
+    handoffLevel: levelOf(input),
     contactDueAt: computeContactDueAt(input.urgency, now),
     ticketId: ticket?.id ?? conversation.ticketId,
     updatedAt: now,
   };
 
-  await applyTransition(deps, updated, transferredMessage);
+  await applyTransition(
+    deps,
+    { previous: conversation, next: updated },
+    transferredMessage(levelOf(input)),
+  );
 
   return updated;
 };
@@ -194,6 +213,9 @@ export const assumeConversation = async (
 ): Promise<Conversation> => {
   const analyst = await requireAnalyst(deps.database, analystId);
   const conversation = await requireConversation(deps.database, conversationId);
+
+  requireAssignment(conversation, analystId);
+
   const mode = targetMode(conversation, "assume");
 
   await assumeLinkedTicket(deps, analyst.id, conversation.ticketId);
@@ -205,7 +227,11 @@ export const assumeConversation = async (
     updatedAt: deps.clock.now(),
   };
 
-  await applyTransition(deps, updated, assumedMessage(analyst.name));
+  await applyTransition(
+    deps,
+    { previous: conversation, next: updated },
+    assumedMessage(analyst.name),
+  );
 
   return updated;
 };
@@ -230,7 +256,11 @@ const releaseConversation = async (
     updatedAt: deps.clock.now(),
   };
 
-  await applyTransition(deps, updated, action === "return" ? returnedMessage : closedMessage);
+  await applyTransition(
+    deps,
+    { previous: conversation, next: updated },
+    action === "return" ? returnedMessage : closedMessage,
+  );
 
   return updated;
 };
@@ -290,7 +320,7 @@ export const listQueue = async (
 };
 
 export const createHandoffService = (deps: HandoffServiceDeps) => ({
-  request: (ownerId: string, conversationId: string, input: HandoffInput) =>
+  request: (ownerId: string, conversationId: string, input: HandoffRequest) =>
     requestHandoff(deps, ownerId, conversationId, input),
   requestOnLimit: (ownerId: string) => requestHandoffOnLimit(deps, ownerId),
   listQueue: (analystId: string, options?: QueueOptions) => listQueue(deps, analystId, options),
