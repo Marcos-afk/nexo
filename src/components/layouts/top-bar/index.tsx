@@ -2,20 +2,15 @@
 
 import { ChevronRight } from "lucide-react";
 import { BREADCRUMB_ROOT } from "@/constants/navigation";
-import type { AssistantStatus } from "@/domain/health";
-import { useAssistantStatus } from "@/viewmodels/use-assistant-status";
+import { useAssistantStatusContext } from "@/providers/assistant-status-provider";
 import { useNavigation } from "@/viewmodels/use-navigation";
 import { AssistantStatusBadge } from "./assistant-status";
 
 const SEPARATOR_SIZE = 14;
 
-interface TopBarProps {
-  readonly initialAssistantStatus: AssistantStatus;
-}
-
-export function TopBar({ initialAssistantStatus }: TopBarProps) {
+export function TopBar() {
   const { current } = useNavigation();
-  const { status } = useAssistantStatus(initialAssistantStatus);
+  const { status } = useAssistantStatusContext();
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b border-rule px-8">

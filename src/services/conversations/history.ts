@@ -22,6 +22,7 @@ const toCandidate = (message: Message) => ({
   id: message.id,
   role: roleByAuthorKind[message.authorKind],
   parts: message.parts ?? [{ type: TEXT_PART_TYPE, text: message.content }],
+  metadata: { authorKind: message.authorKind },
 });
 
 export const toUiMessages = async (
