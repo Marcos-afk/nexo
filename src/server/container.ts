@@ -13,6 +13,7 @@ import { createDecisionService } from "../services/decisions/decision-service";
 import { createDraftService } from "../services/drafts/draft-service";
 import { createHandoffService } from "../services/handoff/handoff-service";
 import { createHelpCenterService } from "../services/help-center/help-center-service";
+import { createStatsService, type StatsService } from "../services/stats/stats-service";
 import { createLegacyGuard, createOutageSimulator } from "../services/tickets/legacy-guard";
 import { createTicketService } from "../services/tickets/ticket-service";
 
@@ -39,6 +40,7 @@ const createLegacy = () => {
 export interface Container {
   readonly chat: ChatOrchestratorDeps;
   readonly auth: AuthService;
+  readonly stats: StatsService;
 }
 
 const createContainer = async (): Promise<Container> => {
@@ -66,7 +68,11 @@ const createContainer = async (): Promise<Container> => {
     decisions: createDecisionService({ database, ids: uuidGenerator }),
   };
 
-  return { chat, auth: createAuthService(conversations) };
+  return {
+    chat,
+    auth: createAuthService(conversations),
+    stats: createStatsService({ database, clock: systemClock }),
+  };
 };
 
 export const getContainer = (): Promise<Container> => {
