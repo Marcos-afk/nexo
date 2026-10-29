@@ -2,6 +2,9 @@ import type { ConversationMode, MessageAuthorKind } from "@/domain/conversation"
 
 export const CHAT_ENDPOINT = "/api/chat";
 export const HANDOFF_ENDPOINT = "/api/chat/handoff";
+export const CHAT_SESSION_ENDPOINT = "/api/chat/session";
+export const EVENTS_ENDPOINT = "/api/events";
+export const SYNC_ERROR = "Não foi possível atualizar a conversa agora.";
 export const MESSAGE_LIMIT_WARNING_THRESHOLD = 25;
 
 export const CHAT_ACTION_LABELS: Readonly<Record<string, string>> = {

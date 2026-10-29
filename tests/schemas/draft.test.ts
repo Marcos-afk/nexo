@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   confirmDraftResponseSchema,
   draftEditSchema,
+  draftNoteEditSchema,
   draftResponseSchema,
   EMPTY_DESCRIPTION_MESSAGE,
+  EMPTY_NOTE_MESSAGE,
   EMPTY_TITLE_MESSAGE,
+  LONG_NOTE_MESSAGE,
   LONG_TITLE_MESSAGE,
 } from "../../src/schemas/draft";
 
@@ -120,5 +123,24 @@ describe("confirmDraftResponseSchema", () => {
     },
   ])("$name", ({ payload, valid }) => {
     expect(confirmDraftResponseSchema.safeParse(payload).success).toBe(valid);
+  });
+});
+
+describe("draftNoteEditSchema", () => {
+  it.each([
+    { name: "a normal note", note: "Também aparece no Teams.", expected: undefined },
+    { name: "an empty note", note: "", expected: EMPTY_NOTE_MESSAGE },
+    { name: "only spaces", note: "   ", expected: EMPTY_NOTE_MESSAGE },
+    { name: "a note over the limit", note: "x".repeat(2001), expected: LONG_NOTE_MESSAGE },
+  ])("$name", ({ note, expected }) => {
+    const result = draftNoteEditSchema.safeParse({ note });
+
+    expect(result.success ? undefined : result.error.issues[0]?.message).toBe(expected);
+  });
+
+  it("trims the note", () => {
+    expect(draftNoteEditSchema.parse({ note: "  mais detalhes " })).toEqual({
+      note: "mais detalhes",
+    });
   });
 });

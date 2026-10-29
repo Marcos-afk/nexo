@@ -28,9 +28,15 @@ export type ChatAttachmentProps =
       readonly answer: string | null;
     };
 
+export interface ChatAnalystProps {
+  readonly name: string;
+  readonly level: string | null;
+}
+
 export interface ChatLineProps {
   readonly id: string;
   readonly authorKind: MessageAuthorKind;
+  readonly analyst: ChatAnalystProps | null;
   readonly text: string;
   readonly actions: readonly ChatActionProps[];
   readonly attachments: readonly ChatAttachmentProps[];

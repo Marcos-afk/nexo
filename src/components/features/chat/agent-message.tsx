@@ -12,10 +12,14 @@ interface AgentMessageProps {
 
 const ANALYST_BADGE_LABEL = "Suporte";
 
-function AnalystBadge() {
+interface AnalystBadgeProps {
+  readonly level: string | null;
+}
+
+function AnalystBadge({ level }: AnalystBadgeProps) {
   return (
     <span className="rounded-sm bg-violet-soft px-1.5 py-px text-xs font-semibold text-violet-text">
-      {ANALYST_BADGE_LABEL}
+      {level ? `${ANALYST_BADGE_LABEL} ${level}` : ANALYST_BADGE_LABEL}
     </span>
   );
 }
@@ -26,9 +30,9 @@ export function AgentMessage({ line, isSendDisabled, onSend }: AgentMessageProps
   return (
     <div className="flex flex-col gap-1.5">
       <ActionLine
-        author={AUTHOR_LABELS[line.authorKind]}
+        author={line.analyst?.name ?? AUTHOR_LABELS[line.authorKind]}
         actions={line.actions}
-        badge={isAnalyst ? <AnalystBadge /> : null}
+        badge={isAnalyst ? <AnalystBadge level={line.analyst?.level ?? null} /> : null}
       />
       {line.text && (
         <div className="flex max-w-150 flex-col gap-2 rounded-xl rounded-tl-sm border border-rule bg-paper px-4 py-3 text-sm leading-normal text-ink">

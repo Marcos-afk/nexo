@@ -243,6 +243,48 @@ describe("attachmentsOf", () => {
   });
 });
 
+describe("analyst identity", () => {
+  it("reads the analyst name and level from the message metadata", () => {
+    const line = toChatLine(
+      message({
+        role: "assistant",
+        metadata: { authorKind: "analyst", authorName: "Rafael Lima", authorLevel: "N2" },
+      }),
+    );
+
+    expect(line).toMatchObject({
+      authorKind: "analyst",
+      analyst: { name: "Rafael Lima", level: "N2" },
+    });
+  });
+
+  it.each([
+    {
+      name: "an analyst without a level",
+      metadata: { authorKind: "analyst", authorName: "Rafael", authorLevel: null },
+      level: null,
+    },
+    {
+      name: "an analyst with the level left out",
+      metadata: { authorKind: "analyst", authorName: "Rafael" },
+      level: null,
+    },
+  ])("keeps $name", ({ metadata, level }) => {
+    expect(toChatLine(message({ role: "assistant", metadata })).analyst).toEqual({
+      name: "Rafael",
+      level,
+    });
+  });
+
+  it.each([
+    { name: "an agent message", metadata: { authorKind: "agent" } },
+    { name: "a system message", metadata: { authorKind: "system" } },
+    { name: "a message with no metadata", metadata: undefined },
+  ])("has no analyst on $name", ({ metadata }) => {
+    expect(toChatLine(message({ role: "assistant", metadata })).analyst).toBeNull();
+  });
+});
+
 describe("choices attachments", () => {
   const choices = toolPart("offerChoices", "output-available", {
     options: ["Só eu", "Minha equipe", "Toda a empresa", "Não sei"],

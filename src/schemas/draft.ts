@@ -6,16 +6,20 @@ import { createTicketInputSchema } from "@/domain/ticket-input";
 import type {
   ConfirmDraftResponseProps,
   DraftEditValues,
+  DraftNoteValues,
   DraftResponseProps,
   DraftStatusResponseProps,
 } from "@/models/draft";
 
 const MAX_TITLE_LENGTH = 120;
 const MAX_DESCRIPTION_LENGTH = 2000;
+const MAX_NOTE_LENGTH = 2000;
 
 export const EMPTY_TITLE_MESSAGE = "Informe um título.";
 export const EMPTY_DESCRIPTION_MESSAGE = "Descreva o problema.";
 export const LONG_TITLE_MESSAGE = `O título pode ter até ${MAX_TITLE_LENGTH} caracteres.`;
+export const EMPTY_NOTE_MESSAGE = "Escreva a informação que será acrescentada ao chamado.";
+export const LONG_NOTE_MESSAGE = `A informação pode ter até ${MAX_NOTE_LENGTH} caracteres.`;
 export const LONG_DESCRIPTION_MESSAGE = `A descrição pode ter até ${MAX_DESCRIPTION_LENGTH} caracteres.`;
 
 const draftStatusSchema = z.object({ id: z.string(), status: z.enum(draftStatuses) });
@@ -40,6 +44,10 @@ export const confirmDraftResponseSchema = z.object({
   draft: draftStatusSchema,
   ticket: z.object({ number: z.string(), title: z.string() }),
 }) satisfies z.ZodType<ConfirmDraftResponseProps>;
+
+export const draftNoteEditSchema = z.object({
+  note: z.string().trim().min(1, EMPTY_NOTE_MESSAGE).max(MAX_NOTE_LENGTH, LONG_NOTE_MESSAGE),
+}) satisfies z.ZodType<DraftNoteValues>;
 
 export const draftEditSchema = z.object({
   title: z.string().trim().min(1, EMPTY_TITLE_MESSAGE).max(MAX_TITLE_LENGTH, LONG_TITLE_MESSAGE),

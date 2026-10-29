@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { DraftEditValues } from "@/models/draft";
+import type { DraftEditValues, DraftNoteValues } from "@/models/draft";
 import { useConfirmShortcut } from "./use-confirm-shortcut";
 import { useDraftCommands } from "./use-draft-commands";
 import { useDraftResource } from "./use-draft-resource";
@@ -15,8 +15,8 @@ export function useDraftCard(draftId: string) {
     onConfirm: () => void commands.confirm(),
   });
 
-  const onSave = async (values: DraftEditValues) => {
-    if (await commands.save(values)) {
+  const finishEditing = async (saved: Promise<boolean>) => {
+    if (await saved) {
       setIsEditing(false);
     }
   };
@@ -31,7 +31,8 @@ export function useDraftCard(draftId: string) {
     shortcutLabel,
     onConfirm: () => void commands.confirm(),
     onCancel: () => void commands.cancel(),
-    onSave,
+    onSaveTicket: (values: DraftEditValues) => finishEditing(commands.saveTicket(values)),
+    onSaveNote: (values: DraftNoteValues) => finishEditing(commands.saveNote(values)),
     onStartEdit: () => setIsEditing(true),
     onStopEdit: () => setIsEditing(false),
   };
