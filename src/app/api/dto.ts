@@ -3,6 +3,8 @@ import type { StoredDraft } from "@/domain/draft";
 import { computeDueAt, type TicketPriority } from "@/domain/sla";
 import type { Ticket, TicketStatus, TicketType } from "@/domain/ticket";
 import type { CreateTicketInput } from "@/domain/ticket-input";
+import { parseToolTrace, type ToolTraceEntry } from "@/domain/tool-trace";
+import type { Decision } from "@/services/decisions/decision-service";
 import type { Draft, DraftDetails } from "@/services/drafts/draft-service";
 
 export interface DraftDto {
@@ -85,4 +87,34 @@ export const toTicketDto = (ticket: Ticket): TicketDto => ({
   createdAt: ticket.createdAt.toISOString(),
   updatedAt: ticket.updatedAt.toISOString(),
   resolvedAt: ticket.resolvedAt?.toISOString() ?? null,
+});
+
+export interface DecisionDto {
+  readonly messageId: string;
+  readonly intent: string;
+  readonly understood: string;
+  readonly action: string;
+  readonly confidence: number;
+  readonly rationale: string;
+  readonly signals: readonly string[];
+  readonly toolCalls: readonly ToolTraceEntry[];
+  readonly model: string;
+  readonly tokensIn: number | null;
+  readonly tokensOut: number | null;
+  readonly latencyMs: number | null;
+}
+
+export const toDecisionDto = (decision: Decision): DecisionDto => ({
+  messageId: decision.messageId,
+  intent: decision.intent,
+  understood: decision.understood,
+  action: decision.action,
+  confidence: decision.confidence,
+  rationale: decision.rationale,
+  signals: decision.signals,
+  toolCalls: parseToolTrace(decision.toolCalls),
+  model: decision.model,
+  tokensIn: decision.tokensIn,
+  tokensOut: decision.tokensOut,
+  latencyMs: decision.latencyMs,
 });
