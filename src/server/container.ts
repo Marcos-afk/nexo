@@ -2,10 +2,12 @@ import { mkdirSync } from "node:fs";
 import { APP_DB_FILE, DATA_DIR, toLibSqlFileUrl } from "../config/data-paths";
 import type { ChatOrchestratorDeps } from "../conversation/chat-orchestrator";
 import { createDatabase, migrateDatabase } from "../db/client";
+import { env } from "../env";
 import { systemClock } from "../lib/clock";
 import { uuidGenerator } from "../lib/ids";
 import { createLogger, stdoutWrite } from "../lib/logger";
 import { triageAgent } from "../mastra/agents/triage-agent";
+import { type AuthService, createAuthService } from "../services/auth/auth-service";
 import type { ConversationServiceDeps } from "../services/conversations/conversation-service";
 import { createDecisionService } from "../services/decisions/decision-service";
 import { createDraftService } from "../services/drafts/draft-service";
@@ -15,25 +17,18 @@ import { createLegacyGuard, createOutageSimulator } from "../services/tickets/le
 import { createTicketService } from "../services/tickets/ticket-service";
 
 const DEPS_CACHE_KEY = "service-deps";
-const LEGACY_OUTAGE_ENV = "LEGACY_OUTAGE_SECONDS";
 const MS_PER_SECOND = 1000;
 
 interface CachedDeps {
-  readonly deps: Promise<ChatOrchestratorDeps>;
+  readonly container: Promise<Container>;
 }
 
 const cache = new Map<string, CachedDeps>();
 
-const readOutageSeconds = (): number => {
-  const seconds = Number(process.env[LEGACY_OUTAGE_ENV]);
-
-  return Number.isFinite(seconds) && seconds > 0 ? seconds : 0;
-};
-
 const createLegacy = () => {
   const outage = createOutageSimulator(systemClock);
 
-  outage.startFor(readOutageSeconds() * MS_PER_SECOND);
+  outage.startFor(env.LEGACY_OUTAGE_SECONDS * MS_PER_SECOND);
 
   return createLegacyGuard({
     outage,
@@ -41,7 +36,12 @@ const createLegacy = () => {
   });
 };
 
-const createChatDeps = async (): Promise<ChatOrchestratorDeps> => {
+export interface Container {
+  readonly chat: ChatOrchestratorDeps;
+  readonly auth: AuthService;
+}
+
+const createContainer = async (): Promise<Container> => {
   mkdirSync(DATA_DIR, { recursive: true });
   const database = createDatabase(toLibSqlFileUrl(APP_DB_FILE));
 
@@ -55,7 +55,7 @@ const createChatDeps = async (): Promise<ChatOrchestratorDeps> => {
   const legacy = createLegacy();
   const ticketDeps = { ...conversations, legacy };
 
-  return {
+  const chat: ChatOrchestratorDeps = {
     conversations,
     clock: systemClock,
     triageAgent,
@@ -65,17 +65,19 @@ const createChatDeps = async (): Promise<ChatOrchestratorDeps> => {
     helpCenter: createHelpCenterService({ database }),
     decisions: createDecisionService({ database, ids: uuidGenerator }),
   };
+
+  return { chat, auth: createAuthService(conversations) };
 };
 
-export const getChatDeps = (): Promise<ChatOrchestratorDeps> => {
+export const getContainer = (): Promise<Container> => {
   const existing = cache.get(DEPS_CACHE_KEY);
 
   if (existing) {
-    return existing.deps;
+    return existing.container;
   }
 
-  const created = { deps: createChatDeps() };
+  const created = { container: createContainer() };
   cache.set(DEPS_CACHE_KEY, created);
 
-  return created.deps;
+  return created.container;
 };

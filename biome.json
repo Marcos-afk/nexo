@@ -52,6 +52,7 @@
         "noParameterAssign": "error",
         "useImportType": "error",
         "noNestedTernary": "error",
+        "noProcessEnv": "error",
         "noUselessElse": "error",
         "noMagicNumbers": "warn",
         "useConsistentTypeDefinitions": {
@@ -96,6 +97,10 @@
     }
   },
   "overrides": [
+    {
+      "includes": ["src/env.ts"],
+      "linter": { "rules": { "style": { "noProcessEnv": "off" } } }
+    },
     {
       "includes": ["src/services/**", "src/domain/**"],
       "linter": {
