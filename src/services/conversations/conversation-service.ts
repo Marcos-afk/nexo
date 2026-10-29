@@ -24,6 +24,7 @@ export interface ConversationRef {
 }
 
 export interface AppendMessageInput {
+  readonly id?: string;
   readonly authorKind: Exclude<MessageAuthorKind, "analyst">;
   readonly content: string;
   readonly parts?: unknown;
@@ -121,6 +122,7 @@ export const countEmployeeMessages = async (
 };
 
 export interface NewMessageInput {
+  readonly id?: string;
   readonly conversationId: string;
   readonly authorKind: MessageAuthorKind;
   readonly authorId: string | null;
@@ -135,7 +137,7 @@ export const insertMessage = async (
 ): Promise<Message> => {
   const now = clock.now();
   const message: Message = {
-    id: ids.next(),
+    id: input.id ?? ids.next(),
     conversationId: input.conversationId,
     authorKind: input.authorKind,
     authorId: input.authorId,
@@ -168,6 +170,7 @@ export const appendMessage = async (
     }
 
     return insertMessage(transaction, deps, {
+      ...(input.id ? { id: input.id } : {}),
       conversationId: conversation.id,
       authorKind: input.authorKind,
       authorId: input.authorKind === "employee" ? ref.ownerId : null,

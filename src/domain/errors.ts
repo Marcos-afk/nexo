@@ -83,6 +83,16 @@ export class ConversationNotFoundError extends Error {
   }
 }
 
+export class DecisionNotFoundError extends Error {
+  public constructor(
+    public readonly messageId: string,
+    options?: ErrorOptions,
+  ) {
+    super("Não há decisão registrada para essa resposta.", options);
+    this.name = "DecisionNotFoundError";
+  }
+}
+
 export class ConversationClosedError extends Error {
   public constructor(
     public readonly conversationId: string,

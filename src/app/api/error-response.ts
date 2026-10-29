@@ -2,6 +2,7 @@ import {
   AnalystRequiredError,
   ConversationClosedError,
   ConversationNotFoundError,
+  DecisionNotFoundError,
   DraftModeChangeError,
   DraftNotFoundError,
   DraftNotPendingError,
@@ -54,6 +55,7 @@ const errorMappings = new Map<new (...args: never[]) => Error, ErrorMapping>([
   [TicketClosedError, { status: HTTP_CONFLICT, code: "ticket_closed" }],
   [TicketNotReopenableError, { status: HTTP_CONFLICT, code: "ticket_not_reopenable" }],
   [ConversationNotFoundError, { status: HTTP_NOT_FOUND, code: "conversation_not_found" }],
+  [DecisionNotFoundError, { status: HTTP_NOT_FOUND, code: "decision_not_found" }],
   [LegacyUnavailableError, { status: HTTP_SERVICE_UNAVAILABLE, code: "legacy_unavailable" }],
   [UnknownEmployeeError, { status: HTTP_UNAUTHORIZED, code: "unknown_employee" }],
 ]);

@@ -2,6 +2,7 @@ import { AUTHOR_LABELS } from "@/constants/chat";
 import type { ChatLineProps } from "@/models/chat";
 import { ActionLine } from "./action-line";
 import { AttachmentView } from "./attachment-view";
+import { DecisionPanel } from "./decision-panel";
 import { MarkdownText } from "./markdown-text";
 
 interface AgentMessageProps {
@@ -47,6 +48,7 @@ export function AgentMessage({ line, isSendDisabled, onSend }: AgentMessageProps
           onSend={onSend}
         />
       ))}
+      {line.authorKind === "agent" && <DecisionPanel messageId={line.id} />}
     </div>
   );
 }
