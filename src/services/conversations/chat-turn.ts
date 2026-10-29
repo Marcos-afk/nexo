@@ -9,6 +9,7 @@ import {
   countEmployeeMessages,
   getActiveConversation,
   listMessages,
+  type Message,
   startConversation,
 } from "./conversation-service";
 import {
@@ -69,12 +70,12 @@ export const recordAgentReply = async (
   deps: ConversationServiceDeps,
   ref: ConversationRef,
   reply: UIMessage,
-): Promise<void> => {
+): Promise<Message | null> => {
   if (!hasReplyContent(reply)) {
-    return;
+    return null;
   }
 
-  await appendMessage(deps, ref, {
+  return appendMessage(deps, ref, {
     authorKind: "agent",
     content: extractText(reply),
     parts: reply.parts,
