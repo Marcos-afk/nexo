@@ -2,9 +2,9 @@ import { mkdirSync } from "node:fs";
 import { APP_DB_FILE, DATA_DIR, toLibSqlFileUrl } from "../config/data-paths";
 import type { ChatOrchestratorDeps } from "../conversation/chat-orchestrator";
 import { createHealthReporter, type HealthReporter } from "../conversation/health-report";
-import { createModelHealth } from "../conversation/model-health";
+import { createModelHealth, type ModelHealth } from "../conversation/model-health";
 import { createDatabase, migrateDatabase } from "../db/client";
-import type { RealtimeEvent } from "../domain/realtime";
+import type { EventPublisher, RealtimeEvent } from "../domain/realtime";
 import { env } from "../env";
 import { systemClock } from "../lib/clock";
 import { createEventBus, type EventBus } from "../lib/event-bus";
@@ -19,8 +19,13 @@ import { createDraftService } from "../services/drafts/draft-service";
 import { createHandoffService } from "../services/handoff/handoff-service";
 import { createHelpCenterService } from "../services/help-center/help-center-service";
 import { createStatsService, type StatsService } from "../services/stats/stats-service";
-import { createLegacyGuard, createOutageSimulator } from "../services/tickets/legacy-guard";
+import {
+  createLegacyGuard,
+  createOutageSimulator,
+  type LegacyGuard,
+} from "../services/tickets/legacy-guard";
 import { createTicketService } from "../services/tickets/ticket-service";
+import { createPresenceTracker, type PresenceTracker } from "./presence";
 
 const DEPS_CACHE_KEY = "service-deps";
 const MS_PER_SECOND = 1000;
@@ -47,29 +52,20 @@ export interface Container {
   readonly auth: AuthService;
   readonly stats: StatsService;
   readonly console: ConsoleService;
+  readonly presence: PresenceTracker;
   readonly health: HealthReporter;
   readonly events: EventBus<RealtimeEvent>;
 }
 
-const createContainer = async (): Promise<Container> => {
-  mkdirSync(DATA_DIR, { recursive: true });
-  const database = createDatabase(toLibSqlFileUrl(APP_DB_FILE));
-
-  await migrateDatabase(database);
-
-  const events = createEventBus<RealtimeEvent>(EVENT_BUFFER_CAPACITY);
-  const conversations: ConversationServiceDeps = {
-    database,
-    clock: systemClock,
-    ids: uuidGenerator,
-    events: { publish: (event) => void events.publish(event) },
-  };
-  const logger = createLogger({ level: "info", clock: systemClock, write: stdoutWrite });
-  const { guard: legacy, outage } = createLegacy(logger);
-  const modelHealth = createModelHealth(systemClock);
+const createChatDeps = (
+  conversations: ConversationServiceDeps,
+  legacy: LegacyGuard,
+  modelHealth: ModelHealth,
+): ChatOrchestratorDeps => {
+  const { database } = conversations;
   const ticketDeps = { ...conversations, legacy };
 
-  const chat: ChatOrchestratorDeps = {
+  return {
     conversations,
     clock: systemClock,
     modelHealth,
@@ -80,12 +76,34 @@ const createContainer = async (): Promise<Container> => {
     helpCenter: createHelpCenterService({ database }),
     decisions: createDecisionService({ database, ids: uuidGenerator }),
   };
+};
+
+const createContainer = async (): Promise<Container> => {
+  mkdirSync(DATA_DIR, { recursive: true });
+  const database = createDatabase(toLibSqlFileUrl(APP_DB_FILE));
+
+  await migrateDatabase(database);
+
+  const events = createEventBus<RealtimeEvent>(EVENT_BUFFER_CAPACITY);
+  const publisher: EventPublisher = { publish: (event) => void events.publish(event) };
+  const conversations: ConversationServiceDeps = {
+    database,
+    clock: systemClock,
+    ids: uuidGenerator,
+    events: publisher,
+  };
+  const presence = createPresenceTracker({ events: publisher, clock: systemClock });
+  const logger = createLogger({ level: "info", clock: systemClock, write: stdoutWrite });
+  const { guard: legacy, outage } = createLegacy(logger);
+  const modelHealth = createModelHealth(systemClock);
+  const chat = createChatDeps(conversations, legacy, modelHealth);
 
   return {
     chat,
     auth: createAuthService({ ...conversations, logger }),
     stats: createStatsService({ database, clock: systemClock }),
-    console: createConsoleService(conversations),
+    console: createConsoleService({ ...conversations, presence }),
+    presence,
     health: createHealthReporter({ modelHealth, ticketSystem: outage, clock: systemClock }),
     events,
   };

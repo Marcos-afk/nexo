@@ -172,3 +172,32 @@ describe("transfer level", () => {
     expect(system?.content).toBe(`Transferida para Suporte ${level} · agent pausado`);
   });
 });
+
+describe("case summary", () => {
+  it("brings the transfer reason, the summary and the ticket priority", async () => {
+    const { service } = await setup();
+    const conversation = await service.getConversation(RAFAEL, ANA_HANDOFF);
+
+    expect(conversation.handoffReason).toBe("Pedido do funcionário");
+    expect(conversation.handoffSummary).toContain("INC-20311");
+    expect(conversation.ticket?.priority).toBe("medium");
+  });
+});
+
+describe("employee presence", () => {
+  it("tells whether the employee is connected right now", async () => {
+    const database = await createSeededDatabase();
+    const online = new Set<string>();
+    const service = createConsoleService({
+      database,
+      clock: createFixedClock(NOW),
+      presence: { isOnline: (userId) => online.has(userId) },
+    });
+
+    expect((await service.getConversation(RAFAEL, ANA_HANDOFF)).employeeOnline).toBe(false);
+
+    online.add(ANA);
+
+    expect((await service.getConversation(RAFAEL, ANA_HANDOFF)).employeeOnline).toBe(true);
+  });
+});

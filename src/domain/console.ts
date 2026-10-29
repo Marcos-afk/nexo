@@ -13,7 +13,11 @@ export type ConsoleLabel =
       readonly ticketNumber: string | null;
       readonly contactDueAt: Date | null;
     }
-  | { readonly kind: "agent_asked_help"; readonly confidence: number }
+  | {
+      readonly kind: "agent_asked_help";
+      readonly confidence: number;
+      readonly decisionMessageId: string;
+    }
   | { readonly kind: "agent_active" }
   | { readonly kind: "resolved_by_agent" }
   | { readonly kind: "closed" }
@@ -28,12 +32,16 @@ export interface LabelFacts {
   readonly handoffReason: string | null;
   readonly ticketNumber: string | null;
   readonly contactDueAt: Date | null;
-  readonly lastConfidence: number | null;
+  readonly lastDecision: { readonly confidence: number; readonly messageId: string } | null;
 }
 
 const awaitingLabelOf = (facts: LabelFacts): ConsoleLabel =>
-  facts.lastConfidence !== null && facts.lastConfidence < CONFIDENCE_HANDOFF_THRESHOLD
-    ? { kind: "agent_asked_help", confidence: facts.lastConfidence }
+  facts.lastDecision !== null && facts.lastDecision.confidence < CONFIDENCE_HANDOFF_THRESHOLD
+    ? {
+        kind: "agent_asked_help",
+        confidence: facts.lastDecision.confidence,
+        decisionMessageId: facts.lastDecision.messageId,
+      }
     : { kind: "transferred", ticketNumber: facts.ticketNumber, contactDueAt: facts.contactDueAt };
 
 const assignedLabelOf = (facts: LabelFacts): ConsoleLabel =>

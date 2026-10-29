@@ -1,29 +1,39 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import type { ConsoleMessageProps } from "@/models/console";
 import { toEntries } from "@/utils/console-conversation";
+import { useMessageScroll } from "@/viewmodels/use-message-scroll";
 import { useNow } from "@/viewmodels/use-now";
 import { MessageBubble, SystemLine } from "./message-bubble";
+
+export interface MessageFocusProps {
+  readonly highlightQuery: string;
+  readonly activeMessageId: string | null;
+  readonly decisionMessageId: string | null;
+}
 
 interface ConversationMessagesProps {
   readonly messages: readonly ConsoleMessageProps[];
   readonly employeeName: string;
+  readonly focus: MessageFocusProps;
 }
 
-export function ConversationMessages({ messages, employeeName }: ConversationMessagesProps) {
+export function ConversationMessages({ messages, employeeName, focus }: ConversationMessagesProps) {
   const now = useNow();
+  const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
-  const lastId = messages.at(-1)?.id;
 
-  useEffect(() => {
-    if (lastId !== undefined) {
-      endRef.current?.scrollIntoView({ block: "end" });
-    }
-  }, [lastId]);
+  useMessageScroll({
+    containerRef,
+    endRef,
+    lastId: messages.at(-1)?.id,
+    activeMessageId: focus.activeMessageId,
+    focusMessageId: focus.decisionMessageId,
+  });
 
   return (
-    <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-5">
+    <div ref={containerRef} className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-5">
       {toEntries(messages, now).map((entry) => {
         if (entry.kind === "day") {
           return (
@@ -36,7 +46,14 @@ export function ConversationMessages({ messages, employeeName }: ConversationMes
         return entry.message.authorKind === "system" ? (
           <SystemLine key={entry.key} message={entry.message} />
         ) : (
-          <MessageBubble key={entry.key} message={entry.message} employeeName={employeeName} />
+          <MessageBubble
+            key={entry.key}
+            message={entry.message}
+            employeeName={employeeName}
+            highlightQuery={focus.highlightQuery}
+            isActive={entry.message.id === focus.activeMessageId}
+            isDecisionOpen={entry.message.id === focus.decisionMessageId}
+          />
         );
       })}
       <div ref={endRef} />
