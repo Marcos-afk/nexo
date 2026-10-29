@@ -14,6 +14,7 @@ export interface MockModel {
 
 const DEFAULT_USAGE: MockTokenUsage = { input: 10, output: 5 };
 const NO_TOKENS = 0;
+const DEFAULT_MODEL_ID = "mock-model-id";
 
 const buildUsage = ({ input, output }: MockTokenUsage) => ({
   inputTokens: { total: input, noCache: input, cacheRead: NO_TOKENS, cacheWrite: NO_TOKENS },
@@ -26,8 +27,10 @@ const toMastraModel = (model: MockLanguageModelV4): MastraModelConfig =>
 export const createMockTextModel = (
   text: string,
   usage: MockTokenUsage = DEFAULT_USAGE,
+  modelId: string = DEFAULT_MODEL_ID,
 ): MockModel => {
   const mock = new MockLanguageModelV4({
+    modelId,
     doGenerate: {
       content: [{ type: "text", text }],
       finishReason: { unified: "stop", raw: "stop" },
@@ -42,10 +45,12 @@ export const createMockTextModel = (
 export const createMockObjectModel = (
   value: unknown,
   usage: MockTokenUsage = DEFAULT_USAGE,
-): MockModel => createMockTextModel(JSON.stringify(value), usage);
+  modelId: string = DEFAULT_MODEL_ID,
+): MockModel => createMockTextModel(JSON.stringify(value), usage, modelId);
 
-export const createFailingModel = (error: Error): MockModel => {
+export const createFailingModel = (error: Error, modelId: string = DEFAULT_MODEL_ID): MockModel => {
   const mock = new MockLanguageModelV4({
+    modelId,
     doGenerate: () => {
       throw error;
     },
@@ -57,9 +62,11 @@ export const createFailingModel = (error: Error): MockModel => {
 export const createMockStreamModel = (
   text: string,
   usage: MockTokenUsage = DEFAULT_USAGE,
+  modelId: string = DEFAULT_MODEL_ID,
 ): MockModel => {
   const textId = "text-1";
   const mock = new MockLanguageModelV4({
+    modelId,
     doStream: {
       stream: simulateReadableStream({
         chunks: [
@@ -154,8 +161,12 @@ export const createScriptedStreamModel = (
   };
 };
 
-export const createFailingStreamModel = (error: Error): MockModel => {
+export const createFailingStreamModel = (
+  error: Error,
+  modelId: string = DEFAULT_MODEL_ID,
+): MockModel => {
   const mock = new MockLanguageModelV4({
+    modelId,
     doStream: () => {
       throw error;
     },

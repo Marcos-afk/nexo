@@ -1,12 +1,11 @@
 import { toAISdkStream } from "@mastra/ai-sdk";
-import type { MastraModelConfig } from "@mastra/core/llm";
 import { RequestContext } from "@mastra/core/request-context";
 import { createUIMessageStream, type UIMessage } from "ai";
 import type { Clock } from "../lib/clock";
 import { createSupportAgent } from "../mastra/agents/support-agent-factory";
 import { createModelCallOptions } from "../mastra/model-call";
 import { classifyModelError } from "../mastra/model-errors";
-import { models } from "../mastra/models";
+import { type ModelSelection, models, respondingModelOf } from "../mastra/models";
 import { CONVERSATION_ID_KEY, EMPLOYEE_ID_KEY } from "../mastra/request-context";
 import { type AgentToolDeps, createAgentTools } from "../mastra/tools/agent";
 import { type ChatTurn, recordAgentReply } from "../services/conversations/chat-turn";
@@ -23,7 +22,7 @@ export interface ReplyDeps extends AgentToolDeps {
   readonly conversations: ConversationServiceDeps;
   readonly decisions: DecisionService;
   readonly clock: Clock;
-  readonly supportModel?: MastraModelConfig;
+  readonly supportModel?: ModelSelection;
 }
 
 export const STREAM_FAILURE_MESSAGE =
@@ -95,7 +94,11 @@ const recordAnswerDecision = async (
   context: AnswerContext,
   messageId: string,
 ): Promise<void> => {
-  const [usage, toolCalls] = await Promise.all([output.usage, output.toolCalls]);
+  const [usage, toolCalls, response] = await Promise.all([
+    output.usage,
+    output.toolCalls,
+    output.response,
+  ]);
   const { triage, plan, startedAt } = context;
 
   await deps.decisions.record({
@@ -106,7 +109,7 @@ const recordAnswerDecision = async (
     tokensIn: sumTokens(triage.tokensIn, usage.inputTokens),
     tokensOut: sumTokens(triage.tokensOut, usage.outputTokens),
     latencyMs: triage.latencyMs + (deps.clock.now().getTime() - startedAt),
-    model: models.support,
+    model: respondingModelOf(response, models.support),
   });
 };
 

@@ -1,8 +1,7 @@
 import { Agent } from "@mastra/core/agent";
-import type { MastraModelConfig } from "@mastra/core/llm";
 import { triageSchema } from "../../domain/triage";
 import { createErrorProcessors, MODEL_MAX_RETRIES } from "../model-call";
-import { models } from "../models";
+import { createModelChain, type ModelSelection, modelChains } from "../models";
 
 const TRIAGE_INSTRUCTIONS = [
   "Você faz a triagem de mensagens de funcionários para o service desk de TI da Nexo.",
@@ -13,7 +12,7 @@ const TRIAGE_INSTRUCTIONS = [
   "confidence é um inteiro de 0 a 100 com a sua segurança de que a intenção escolhida está certa. 90 a 100: mensagem clara e sem outra leitura razoável. 60 a 89: provável, mas com alguma dúvida. 30 a 59: ambígua ou com pouca informação. 0 a 29: praticamente um palpite. Não use 100 por hábito.",
 ].join("\n");
 
-export const createTriageAgent = (model: MastraModelConfig = models.triage) =>
+export const createTriageAgent = (model: ModelSelection = createModelChain(modelChains.triage)) =>
   new Agent({
     id: "triage-agent",
     name: "Nexo Triagem",
