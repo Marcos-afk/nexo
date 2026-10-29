@@ -9,7 +9,7 @@ import { env } from "../env";
 import { systemClock } from "../lib/clock";
 import { createEventBus, type EventBus } from "../lib/event-bus";
 import { uuidGenerator } from "../lib/ids";
-import { createLogger, stdoutWrite } from "../lib/logger";
+import { createLogger, type Logger, stdoutWrite } from "../lib/logger";
 import { triageAgent } from "../mastra/agents/triage-agent";
 import { type AuthService, createAuthService } from "../services/auth/auth-service";
 import type { ConversationServiceDeps } from "../services/conversations/conversation-service";
@@ -31,15 +31,12 @@ interface CachedDeps {
 
 const cache = new Map<string, CachedDeps>();
 
-const createLegacy = () => {
+const createLegacy = (logger: Logger) => {
   const outage = createOutageSimulator(systemClock);
 
   outage.startFor(env.LEGACY_OUTAGE_SECONDS * MS_PER_SECOND);
 
-  const guard = createLegacyGuard({
-    outage,
-    logger: createLogger({ level: "info", clock: systemClock, write: stdoutWrite }),
-  });
+  const guard = createLegacyGuard({ outage, logger });
 
   return { guard, outage };
 };
@@ -65,7 +62,8 @@ const createContainer = async (): Promise<Container> => {
     ids: uuidGenerator,
     events: { publish: (event) => void events.publish(event) },
   };
-  const { guard: legacy, outage } = createLegacy();
+  const logger = createLogger({ level: "info", clock: systemClock, write: stdoutWrite });
+  const { guard: legacy, outage } = createLegacy(logger);
   const modelHealth = createModelHealth(systemClock);
   const ticketDeps = { ...conversations, legacy };
 
@@ -83,7 +81,7 @@ const createContainer = async (): Promise<Container> => {
 
   return {
     chat,
-    auth: createAuthService(conversations),
+    auth: createAuthService({ ...conversations, logger }),
     stats: createStatsService({ database, clock: systemClock }),
     health: createHealthReporter({ modelHealth, ticketSystem: outage, clock: systemClock }),
     events,
