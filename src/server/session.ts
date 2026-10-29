@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { UnauthenticatedError } from "../domain/errors";
 import { isProduction } from "../env";
 import type { AuthService, AuthSession } from "../services/auth/auth-service";
@@ -44,8 +45,8 @@ export const startSessionCookie = async (session: AuthSession): Promise<void> =>
   });
 };
 
-export const findSession = async (auth: AuthService): Promise<AuthSession | null> => {
+export const findSession = cache(async (auth: AuthService): Promise<AuthSession | null> => {
   const sessionId = await readSessionId();
 
   return sessionId ? auth.resolve(sessionId) : null;
-};
+});

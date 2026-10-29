@@ -4,15 +4,13 @@ import { type SubmitEvent, useState } from "react";
 import { useForm, useFormState } from "react-hook-form";
 import { toast } from "sonner";
 import { DEFAULT_LOGIN_VALUES, LOGIN_ENDPOINT } from "@/constants/auth";
-import { ApiError, api } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { LoginFormValues } from "@/models/auth";
 import { loginResponseSchema, loginSchema } from "@/schemas/auth";
+import { errorMessageOf } from "@/utils/error-message";
 import { homePathFor } from "@/utils/home-path";
 
 const UNEXPECTED_ERROR = "Algo deu errado ao entrar. Tente novamente.";
-
-const errorMessageOf = (error: unknown): string =>
-  error instanceof ApiError ? error.message : UNEXPECTED_ERROR;
 
 export function useLogin() {
   const router = useRouter();
@@ -34,7 +32,7 @@ export function useLogin() {
       router.replace(homePathFor(user.role));
       router.refresh();
     } catch (error) {
-      toast.error(errorMessageOf(error));
+      toast.error(errorMessageOf(error, UNEXPECTED_ERROR));
     }
   };
 
