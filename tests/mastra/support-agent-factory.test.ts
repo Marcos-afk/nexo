@@ -48,6 +48,9 @@ describe("buildSupportInstructions", () => {
     { tool: "listMyTickets", text: "lista clicável" },
     { tool: "getTicket", text: "já aparece para o funcionário como um cartão" },
     { tool: "buildDraft", text: "não repita esses dados no texto" },
+    { tool: "offerChoices", text: "Só eu" },
+    { tool: "offerChoices", text: "Falar com um analista" },
+    { tool: "offerChoices", text: "nunca responda só com os botões" },
   ] as const)("tells the model how to use $tool", ({ tool, text }) => {
     expect(buildSupportInstructions([tool], false)).toContain(text);
   });

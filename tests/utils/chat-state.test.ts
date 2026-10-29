@@ -31,9 +31,14 @@ describe("counterOf", () => {
 describe("noticeOf", () => {
   it.each([
     {
-      name: "limit reached wins over everything",
-      state: { isLimitReached: true, assistantStatus: "offline", mode: "with_analyst" },
-      expected: { tone: "danger", text: LIMIT_NOTICE },
+      name: "limit reached with the agent offers to call an analyst",
+      state: { isLimitReached: true, assistantStatus: "offline", mode: "agent" },
+      expected: { tone: "danger", text: LIMIT_NOTICE, action: "request-analyst" },
+    },
+    {
+      name: "limit reached after the transfer shows the analyst mode instead",
+      state: { isLimitReached: true, assistantStatus: "online", mode: "awaiting_analyst" },
+      expected: { tone: "info", text: MODE_NOTICES.awaiting_analyst },
     },
     {
       name: "offline assistant",

@@ -270,3 +270,26 @@ describe("requestHandoff", () => {
     expect(await invoke(tools.requestHandoff, input)).toHaveProperty("error");
   });
 });
+
+describe("offerChoices", () => {
+  it("echoes the options so the screen can show them as buttons", async () => {
+    const { tools } = await createTools();
+    const result = await invoke(tools.offerChoices, {
+      options: ["Só eu", "Minha equipe", "Toda a empresa", "Não sei"],
+    });
+
+    expect(result).toEqual({ options: ["Só eu", "Minha equipe", "Toda a empresa", "Não sei"] });
+  });
+
+  it.each([
+    { name: "a single option", options: ["Só eu"] },
+    { name: "too many options", options: ["a", "b", "c", "d", "e", "f"] },
+    { name: "an empty option", options: ["Sim", ""] },
+    { name: "a very long option", options: ["Sim", "x".repeat(41)] },
+  ])("rejects $name", async ({ options }) => {
+    const { tools } = await createTools();
+    const result = await tools.offerChoices.inputSchema?.["~standard"].validate({ options });
+
+    expect(result?.issues).toBeDefined();
+  });
+});

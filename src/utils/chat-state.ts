@@ -38,8 +38,8 @@ export const noticeOf = ({
 }: ChatStateProps): ChatNoticeProps | null => {
   const modeNotice = MODE_NOTICES[mode];
 
-  if (isLimitReached) {
-    return { tone: "danger", text: LIMIT_NOTICE };
+  if (isLimitReached && mode === "agent") {
+    return { tone: "danger", text: LIMIT_NOTICE, action: "request-analyst" };
   }
 
   if (assistantStatus === "offline") {

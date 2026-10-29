@@ -5,6 +5,8 @@ export type ChatActionStatusType = "running" | "done" | "failed";
 
 export type ChatNoticeToneType = "info" | "warning" | "danger";
 
+export type ChatNoticeActionType = "request-analyst";
+
 export interface ChatActionProps {
   readonly key: string;
   readonly label: string;
@@ -18,7 +20,13 @@ export type ChatAttachmentProps =
       readonly key: string;
       readonly tickets: readonly TicketSummaryView[];
     }
-  | { readonly kind: "ticket"; readonly key: string; readonly ticket: TicketDetailView };
+  | { readonly kind: "ticket"; readonly key: string; readonly ticket: TicketDetailView }
+  | {
+      readonly kind: "choices";
+      readonly key: string;
+      readonly options: readonly string[];
+      readonly answer: string | null;
+    };
 
 export interface ChatLineProps {
   readonly id: string;
@@ -31,6 +39,7 @@ export interface ChatLineProps {
 export interface ChatNoticeProps {
   readonly tone: ChatNoticeToneType;
   readonly text: string;
+  readonly action?: ChatNoticeActionType;
 }
 
 export interface ChatCounterProps {

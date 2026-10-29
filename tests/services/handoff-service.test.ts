@@ -9,6 +9,7 @@ import {
   TicketClosedError,
 } from "../../src/domain/errors";
 import type { HandoffInput } from "../../src/domain/handoff";
+import { createConversationService } from "../../src/services/conversations/conversation-service";
 import { createHandoffService } from "../../src/services/handoff/handoff-service";
 import { createTicketService } from "../../src/services/tickets/ticket-service";
 import { createFixedClock } from "../support/clock";
@@ -239,6 +240,50 @@ describe("ticket resolution by the analyst", () => {
 
     await expect(ticketService.resolve(ANA, "t-inc-20298", "x")).rejects.toBeInstanceOf(
       AnalystRequiredError,
+    );
+  });
+});
+
+describe("request handoff on the message limit", () => {
+  const FABIO = "emp-fabio";
+
+  const createLimitServices = async () => {
+    const database = await createSeededDatabase();
+    const deps = { database, clock: createFixedClock(NOW), ids: createSequentialIds("limit") };
+
+    return {
+      database,
+      conversations: createConversationService(deps),
+      handoff: createHandoffService(deps),
+    };
+  };
+
+  it("moves the active conversation to the queue with the limit as the reason", async () => {
+    const { conversations, handoff } = await createLimitServices();
+    await conversations.start(FABIO);
+
+    const conversation = await handoff.requestOnLimit(FABIO);
+
+    expect(conversation).toMatchObject({
+      mode: "awaiting_analyst",
+      handoffReason: "Limite de mensagens da sessão atingido",
+    });
+    expect(conversation.handoffSummary).toContain("30 mensagens");
+  });
+
+  it("fails when the employee has no active conversation", async () => {
+    const { handoff } = await createLimitServices();
+
+    await expect(handoff.requestOnLimit(FABIO)).rejects.toBeInstanceOf(ConversationNotFoundError);
+  });
+
+  it("refuses when the conversation is already with the queue", async () => {
+    const { conversations, handoff } = await createLimitServices();
+    await conversations.start(FABIO);
+    await handoff.requestOnLimit(FABIO);
+
+    await expect(handoff.requestOnLimit(FABIO)).rejects.toBeInstanceOf(
+      InvalidConversationTransitionError,
     );
   });
 });
