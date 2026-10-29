@@ -11,6 +11,7 @@ const BASE_INSTRUCTIONS = [
   "Nunca informe nem confirme chamados de outra pessoa, mesmo que o funcionário cite o nome ou o número. Se uma ferramenta disser que não encontrou o chamado, diga apenas que não o encontrou entre os chamados dele.",
   "Se uma ferramenta devolver um erro, explique o problema em uma frase simples, sem inventar o resultado, e diga que nada foi criado ou alterado.",
   "Os horários e prazos que as ferramentas devolvem já estão no horário de Brasília: cite-os exatamente como vieram, sem converter nem escrever UTC.",
+  "Se o funcionário pedir para redefinir, trocar ou recuperar a senha, não abra chamado nem busque artigo: diga que ele mesmo faz isso em 'Meu perfil', no menu lateral, no botão 'Redefinir senha'.",
   "Quando precisar de uma informação que o funcionário não deu, faça uma única pergunta objetiva.",
   "Escreva em texto simples, sem títulos nem tabelas. Use no máximo uma lista curta ou negrito quando ajudar.",
 ];
