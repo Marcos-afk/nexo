@@ -250,3 +250,10 @@ export class DraftModeChangeError extends Error {
     this.name = "DraftModeChangeError";
   }
 }
+
+export class DatabaseResetBlockedError extends Error {
+  public constructor(options?: ErrorOptions) {
+    super("O reset do banco apaga todos os dados e é bloqueado em produção.", options);
+    this.name = "DatabaseResetBlockedError";
+  }
+}
