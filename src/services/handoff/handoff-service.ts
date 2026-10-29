@@ -23,9 +23,11 @@ import { announceConversation, announceMessage } from "../conversations/announce
 import {
   type Conversation,
   type ConversationServiceDeps,
+  getActiveConversation,
   insertMessage,
   type Message,
 } from "../conversations/conversation-service";
+import { SESSION_MESSAGE_LIMIT } from "../conversations/history";
 import type { LegacyGuard } from "../tickets/legacy-guard";
 import { createTicketService } from "../tickets/ticket-service";
 
@@ -166,6 +168,25 @@ export const requestHandoff = async (
   return updated;
 };
 
+const LIMIT_HANDOFF_INPUT: HandoffInput = {
+  reason: "Limite de mensagens da sessão atingido",
+  summary: `O funcionário atingiu o limite de ${SESSION_MESSAGE_LIMIT} mensagens da sessão e pediu um analista para continuar.`,
+  urgency: "normal",
+};
+
+export const requestHandoffOnLimit = async (
+  deps: HandoffServiceDeps,
+  ownerId: string,
+): Promise<Conversation> => {
+  const conversation = await getActiveConversation(deps, ownerId);
+
+  if (!conversation) {
+    throw new ConversationNotFoundError(ownerId);
+  }
+
+  return requestHandoff(deps, ownerId, conversation.id, LIMIT_HANDOFF_INPUT);
+};
+
 export const assumeConversation = async (
   deps: HandoffServiceDeps,
   analystId: string,
@@ -271,6 +292,7 @@ export const listQueue = async (
 export const createHandoffService = (deps: HandoffServiceDeps) => ({
   request: (ownerId: string, conversationId: string, input: HandoffInput) =>
     requestHandoff(deps, ownerId, conversationId, input),
+  requestOnLimit: (ownerId: string) => requestHandoffOnLimit(deps, ownerId),
   listQueue: (analystId: string, options?: QueueOptions) => listQueue(deps, analystId, options),
   assume: (analystId: string, conversationId: string) =>
     assumeConversation(deps, analystId, conversationId),

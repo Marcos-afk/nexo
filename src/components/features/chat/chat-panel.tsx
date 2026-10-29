@@ -43,7 +43,13 @@ export function ChatPanel({ initialMessages, initialSession }: ChatPanelProps) {
         </div>
       </div>
       <div className="mx-auto flex w-full max-w-202 flex-col gap-2 px-6 pt-2.5 pb-4.5">
-        {chat.notice && <ChatNotice notice={chat.notice} />}
+        {chat.notice && (
+          <ChatNotice
+            notice={chat.notice}
+            isWorking={chat.isRequestingAnalyst}
+            onAction={chat.onRequestAnalyst}
+          />
+        )}
         <Composer
           onSend={chat.sendText}
           isBusy={chat.isBusy}
