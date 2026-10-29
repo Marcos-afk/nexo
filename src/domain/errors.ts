@@ -227,3 +227,13 @@ export class UnauthenticatedError extends Error {
     this.name = "UnauthenticatedError";
   }
 }
+
+export class InvalidEnvironmentError extends Error {
+  public constructor(
+    public readonly variables: readonly string[],
+    options?: ErrorOptions,
+  ) {
+    super(`Variáveis de ambiente ausentes ou inválidas: ${variables.join(", ")}.`, options);
+    this.name = "InvalidEnvironmentError";
+  }
+}
