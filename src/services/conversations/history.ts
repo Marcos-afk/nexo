@@ -18,18 +18,39 @@ const roleByAuthorKind = {
 
 const agentVisibleKinds: ReadonlySet<MessageAuthorKind> = new Set(["employee", "agent"]);
 
-const toCandidate = (message: Message) => ({
+export interface AnalystProfile {
+  readonly name: string;
+  readonly level: string | null;
+}
+
+export type AnalystProfiles = ReadonlyMap<string, AnalystProfile>;
+
+const metadataOf = (message: Message, profiles: AnalystProfiles) => {
+  const profile =
+    message.authorKind === "analyst" && message.authorId
+      ? profiles.get(message.authorId)
+      : undefined;
+
+  return profile
+    ? { authorKind: message.authorKind, authorName: profile.name, authorLevel: profile.level }
+    : { authorKind: message.authorKind };
+};
+
+const toCandidate = (message: Message, profiles: AnalystProfiles) => ({
   id: message.id,
   role: roleByAuthorKind[message.authorKind],
   parts: message.parts ?? [{ type: TEXT_PART_TYPE, text: message.content }],
-  metadata: { authorKind: message.authorKind },
+  metadata: metadataOf(message, profiles),
 });
 
 export const toUiMessages = async (
   ownerId: string,
   messages: readonly Message[],
+  profiles: AnalystProfiles = new Map(),
 ): Promise<UIMessage[]> => {
-  const validated = await safeValidateUIMessages({ messages: messages.map(toCandidate) });
+  const validated = await safeValidateUIMessages({
+    messages: messages.map((message) => toCandidate(message, profiles)),
+  });
 
   if (!validated.success) {
     throw new StoredConversationInvalidError(ownerId, { cause: validated.error });

@@ -7,6 +7,7 @@ import {
 } from "../../src/services/conversations/chat-turn";
 import { createConversationService } from "../../src/services/conversations/conversation-service";
 import { extractText, SESSION_MESSAGE_LIMIT } from "../../src/services/conversations/history";
+import { createHandoffService } from "../../src/services/handoff/handoff-service";
 import { createFixedClock } from "../support/clock";
 import { createSeededDatabase } from "../support/database";
 import { createSequentialIds } from "../support/ids";
@@ -107,5 +108,36 @@ describe("loadActiveConversationMessages", () => {
     const deps = await createDeps();
 
     expect(await loadActiveConversationMessages(deps, FABIO)).toEqual([]);
+  });
+});
+
+describe("loadActiveConversationMessages: author identity", () => {
+  const ANALYST_TEXT = "Oi Carla, já estou vendo o seu caso.";
+
+  it("carries the analyst name and level on the analyst messages", async () => {
+    const deps = await createDeps();
+    const handoff = createHandoffService(deps);
+
+    await handoff.assume("analyst-rafael", "c-carla");
+    await handoff.reply("analyst-rafael", "c-carla", ANALYST_TEXT);
+
+    const messages = await loadActiveConversationMessages(deps, "emp-carla");
+    const reply = messages.find((message) => extractText(message) === ANALYST_TEXT);
+
+    expect(reply?.metadata).toEqual({
+      authorKind: "analyst",
+      authorName: "Rafael Lima",
+      authorLevel: "N2",
+    });
+  });
+
+  it("keeps only the author kind on the other messages", async () => {
+    const deps = await createDeps();
+    const messages = await loadActiveConversationMessages(deps, "emp-carla");
+
+    expect(messages.length).toBeGreaterThan(0);
+    messages.forEach((message) => {
+      expect(Object.keys(message.metadata as object)).toEqual(["authorKind"]);
+    });
   });
 });

@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import type { DraftEditValues } from "@/models/draft";
+import type { DraftEditValues, DraftNoteValues, DraftProps } from "@/models/draft";
 import {
   confirmDraftResponseSchema,
   draftResponseSchema,
@@ -18,6 +18,12 @@ export function useDraftCommands({ draftId, resource }: UseDraftCommandsProps) {
   const { actionError, isWorking, run } = useDraftRunner();
   const path = draftPathOf(draftId);
 
+  const patch = async (body: unknown) => {
+    const response = await api.patch(path, body, draftResponseSchema);
+
+    setDraft(response.draft);
+  };
+
   const confirm = () =>
     run(async () => {
       const response = await api.post(`${path}/confirm`, undefined, confirmDraftResponseSchema);
@@ -35,17 +41,36 @@ export function useDraftCommands({ draftId, resource }: UseDraftCommandsProps) {
       setDraft((current) => (current ? { ...current, status: response.draft.status } : current));
     });
 
-  const save = (values: DraftEditValues) =>
-    run(async () => {
-      if (draft?.ticket == null) {
-        return;
-      }
+  const saveTicket = (values: DraftEditValues) => run(() => patchTicket(draft, values, patch));
 
-      const ticket = { ...draft.ticket, ...values, affected: values.affected || null };
-      const response = await api.patch(path, { mode: "create", ticket }, draftResponseSchema);
+  const saveNote = (values: DraftNoteValues) => run(() => patchNote(draft, values, patch));
 
-      setDraft(response.draft);
-    });
-
-  return { actionError, isWorking, confirm, cancel, save };
+  return { actionError, isWorking, confirm, cancel, saveTicket, saveNote };
 }
+
+const patchTicket = async (
+  draft: DraftProps | null,
+  values: DraftEditValues,
+  patch: (body: unknown) => Promise<void>,
+): Promise<void> => {
+  if (draft?.ticket == null) {
+    return;
+  }
+
+  await patch({
+    mode: "create",
+    ticket: { ...draft.ticket, ...values, affected: values.affected || null },
+  });
+};
+
+const patchNote = async (
+  draft: DraftProps | null,
+  values: DraftNoteValues,
+  patch: (body: unknown) => Promise<void>,
+): Promise<void> => {
+  if (draft?.targetTicketNumber == null) {
+    return;
+  }
+
+  await patch({ mode: "update", ticketNumber: draft.targetTicketNumber, note: values.note });
+};
