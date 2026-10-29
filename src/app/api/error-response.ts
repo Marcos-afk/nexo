@@ -5,6 +5,8 @@ import {
   ModelUnavailableError,
   SessionMessageLimitReachedError,
   TriageOutputInvalidError,
+  UnauthenticatedError,
+  UnknownEmployeeError,
 } from "@/domain/errors";
 
 const HTTP_UNAUTHORIZED = 401;
@@ -29,6 +31,8 @@ const errorMappings = new Map<new (...args: never[]) => Error, ErrorMapping>([
   [TriageOutputInvalidError, { status: HTTP_BAD_GATEWAY, code: "triage_output_invalid" }],
   [MissingEmployeeContextError, { status: HTTP_UNAUTHORIZED, code: "missing_employee_context" }],
   [ConversationClosedError, { status: HTTP_CONFLICT, code: "conversation_closed" }],
+  [UnauthenticatedError, { status: HTTP_UNAUTHORIZED, code: "unauthenticated" }],
+  [UnknownEmployeeError, { status: HTTP_UNAUTHORIZED, code: "unknown_employee" }],
 ]);
 
 const retryAfterHeaders = (error: Error): HeadersInit =>
@@ -49,4 +53,18 @@ export const toErrorResponse = (error: unknown): Response | null => {
         { status: mapping.status, headers: retryAfterHeaders(error) },
       )
     : null;
+};
+
+export const respondWith = async (action: () => Promise<Response>): Promise<Response> => {
+  try {
+    return await action();
+  } catch (error) {
+    const response = toErrorResponse(error);
+
+    if (response) {
+      return response;
+    }
+
+    throw error;
+  }
 };
