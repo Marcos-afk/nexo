@@ -1,7 +1,7 @@
-import type { MastraModelConfig } from "@mastra/core/llm";
 import type { ChatOrchestratorDeps } from "../../src/conversation/chat-orchestrator";
 import type { Database } from "../../src/db/client";
 import { createTriageAgent } from "../../src/mastra/agents/triage-agent";
+import type { ModelSelection } from "../../src/mastra/models";
 import { createDecisionService } from "../../src/services/decisions/decision-service";
 import { createDraftService } from "../../src/services/drafts/draft-service";
 import { createHandoffService } from "../../src/services/handoff/handoff-service";
@@ -14,8 +14,8 @@ import { createSequentialIds } from "./ids";
 const NOW = "2026-10-28T10:00:00-03:00";
 
 export interface ChatDepsModels {
-  readonly triage: MastraModelConfig;
-  readonly support?: MastraModelConfig;
+  readonly triage: ModelSelection;
+  readonly support?: ModelSelection;
   readonly database?: Database;
 }
 

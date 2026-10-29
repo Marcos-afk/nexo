@@ -1,8 +1,7 @@
 import { Agent } from "@mastra/core/agent";
-import type { MastraModelConfig } from "@mastra/core/llm";
 import type { AgentToolName } from "../../domain/turn-policy";
 import { createErrorProcessors, MODEL_MAX_RETRIES } from "../model-call";
-import { models } from "../models";
+import { createModelChain, type ModelSelection, modelChains } from "../models";
 import type { AgentTools } from "../tools/agent";
 
 const BASE_INSTRUCTIONS = [
@@ -46,7 +45,7 @@ export interface SupportAgentConfig {
   readonly tools: AgentTools;
   readonly toolNames: readonly AgentToolName[];
   readonly offerAnalyst: boolean;
-  readonly model?: MastraModelConfig;
+  readonly model?: ModelSelection;
 }
 
 export const selectTools = (
@@ -69,7 +68,7 @@ export const createSupportAgent = ({
   tools,
   toolNames,
   offerAnalyst,
-  model = models.support,
+  model = createModelChain(modelChains.support),
 }: SupportAgentConfig): Agent =>
   new Agent({
     id: "support-agent",

@@ -38,7 +38,9 @@ const apiErrorWith = (statusCode: number) =>
 
 describe("runTriage", () => {
   it("returns the validated triage with tokens and the model name", async () => {
-    const outcome = await run(createMockObjectModel(validTriage, { input: 30, output: 12 }));
+    const outcome = await run(
+      createMockObjectModel(validTriage, { input: 30, output: 12 }, "gemini-3.5-flash-lite"),
+    );
 
     expect(outcome.triage).toEqual(validTriage);
     expect(outcome).toMatchObject({
