@@ -115,6 +115,21 @@ const TWO_DIGITS = 2;
 
 const twoDigits = (value: number): string => String(value).padStart(TWO_DIGITS, "0");
 
+const OFFICE_DATE_TIME_PATTERN = /^(\d{2})\/(\d{2})\/(\d{4}) às (\d{2}):(\d{2})$/;
+
+export const parseOfficeDateTime = (text: string): Date | null => {
+  const match = OFFICE_DATE_TIME_PATTERN.exec(text);
+
+  if (!match) {
+    return null;
+  }
+
+  const [day, month, year, hours, minutes] = match.slice(1).map(Number);
+  const wallClockMs = Date.UTC(year ?? 0, (month ?? 1) - 1, day, hours, minutes);
+
+  return new Date(wallClockMs - OFFICE_UTC_OFFSET_MS);
+};
+
 export const formatOfficeDateTime = (date: Date): string => {
   const local = new Date(date.getTime() + OFFICE_UTC_OFFSET_MS);
   const day = `${twoDigits(local.getUTCDate())}/${twoDigits(local.getUTCMonth() + 1)}/${local.getUTCFullYear()}`;

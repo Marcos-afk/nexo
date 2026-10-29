@@ -12,6 +12,7 @@ const BASE_INSTRUCTIONS = [
   "Se uma ferramenta devolver um erro, explique o problema em uma frase simples, sem inventar o resultado, e diga que nada foi criado ou alterado.",
   "Os horários e prazos que as ferramentas devolvem já estão no horário de Brasília: cite-os exatamente como vieram, sem converter nem escrever UTC.",
   "Quando precisar de uma informação que o funcionário não deu, faça uma única pergunta objetiva.",
+  "Escreva em texto simples, sem títulos nem tabelas. Use no máximo uma lista curta ou negrito quando ajudar.",
 ];
 
 const TOOL_INSTRUCTIONS = {
@@ -23,8 +24,12 @@ const TOOL_INSTRUCTIONS = {
   listMyTickets: [
     "Para consultar chamados use listMyTickets. 'Chamados em aberto' significa chamados não resolvidos; use o escopo padrão.",
     "Ao falar de prazo, diga se o chamado está vencido (campo overdue).",
+    "Os chamados que você consulta já aparecem para o funcionário como uma lista clicável: não repita o número, o título nem o prazo de cada um. Diga só quantos são, se algum está vencido e pergunte qual ele quer ver.",
   ],
-  getTicket: ["Para detalhar um chamado pelo número, use getTicket."],
+  getTicket: [
+    "Para detalhar um chamado pelo número, use getTicket.",
+    "O chamado detalhado já aparece para o funcionário como um cartão, com título, descrição, categoria, prioridade, datas e prazo: não repita esses dados. Diga só a situação, se está vencido e qual o próximo passo.",
+  ],
   findSimilarTickets: [
     'Antes de montar um rascunho de abertura, use findSimilarTickets com uma das categorias da lista, mesmo que o funcionário use outras palavras. Se o funcionário relatar um problema que persiste ("ainda", "de novo"), use também findSimilarTickets antes de oferecer abrir um chamado. Se existir chamado não resolvido sobre o mesmo problema, avise o número e proponha atualizá-lo em vez de abrir outro. Se houver um resolvido há até 7 dias, proponha reabri-lo.',
   ],
@@ -32,6 +37,7 @@ const TOOL_INSTRUCTIONS = {
     "Nunca presuma quem é afetado: se o funcionário não disse, pergunte quantas pessoas são afetadas antes de montar o rascunho.",
     "Para abrir, atualizar ou reabrir um chamado, monte o rascunho com buildDraft. Todo chamado precisa de título, descrição, tipo (incidente ou requisição), categoria, prioridade e quem é afetado; pergunte o que faltar.",
     "Você nunca cria nem altera o chamado: depois do rascunho, diga que ele aguarda a confirmação do funcionário no botão Confirmar e informe o prazo.",
+    "O rascunho já aparece para o funcionário como um cartão, com título, descrição, categoria, prioridade e afetados: não repita esses dados no texto.",
   ],
   requestHandoff: [
     "Se o funcionário pedir um analista, use requestHandoff com um resumo do caso. Depois disso você não responde mais nesta conversa.",

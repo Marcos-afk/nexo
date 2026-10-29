@@ -23,7 +23,9 @@ export function useComposer({ onSend, isBusy, isDisabled }: UseComposerProps) {
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) {
+    const isModified = event.shiftKey || event.metaKey || event.ctrlKey;
+
+    if (event.key !== "Enter" || isModified || event.nativeEvent.isComposing) {
       return;
     }
 

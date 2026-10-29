@@ -7,6 +7,8 @@ import { UserMessage } from "./user-message";
 
 interface MessageViewProps {
   readonly line: ChatLineProps;
+  readonly isSendDisabled: boolean;
+  readonly onSend: (text: string) => void;
 }
 
 type MessageView = (props: MessageViewProps) => ReactNode;
@@ -20,12 +22,14 @@ const MESSAGE_VIEWS = {
 
 interface MessageListProps {
   readonly lines: readonly ChatLineProps[];
+  readonly isSendDisabled: boolean;
+  readonly onSend: (text: string) => void;
 }
 
-export function MessageList({ lines }: MessageListProps) {
+export function MessageList({ lines, isSendDisabled, onSend }: MessageListProps) {
   return lines.map((line) => {
     const View = MESSAGE_VIEWS[line.authorKind];
 
-    return <View key={line.id} line={line} />;
+    return <View key={line.id} line={line} isSendDisabled={isSendDisabled} onSend={onSend} />;
   });
 }
