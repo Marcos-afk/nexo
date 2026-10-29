@@ -1,5 +1,7 @@
+import { and, eq } from "drizzle-orm";
 import type { Database } from "../../db/client";
-import { decisions } from "../../db/schema";
+import { conversations, decisions, messages } from "../../db/schema";
+import { DecisionNotFoundError } from "../../domain/errors";
 import type { Triage } from "../../domain/triage";
 import type { IdGenerator } from "../../lib/ids";
 
@@ -46,8 +48,29 @@ export const recordDecision = async (
   return decision;
 };
 
+export const getDecisionForMessage = async (
+  { database }: Pick<DecisionServiceDeps, "database">,
+  ownerId: string,
+  messageId: string,
+): Promise<Decision> => {
+  const [row] = await database
+    .select({ decision: decisions })
+    .from(decisions)
+    .innerJoin(messages, eq(decisions.messageId, messages.id))
+    .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+    .where(and(eq(decisions.messageId, messageId), eq(conversations.employeeId, ownerId)));
+
+  if (!row) {
+    throw new DecisionNotFoundError(messageId);
+  }
+
+  return row.decision;
+};
+
 export const createDecisionService = (deps: DecisionServiceDeps) => ({
   record: (record: DecisionRecord) => recordDecision(deps, record),
+  getForMessage: (ownerId: string, messageId: string) =>
+    getDecisionForMessage(deps, ownerId, messageId),
 });
 
 export type DecisionService = ReturnType<typeof createDecisionService>;

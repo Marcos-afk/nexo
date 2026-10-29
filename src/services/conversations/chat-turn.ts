@@ -86,6 +86,7 @@ export const recordAgentReply = async (
   }
 
   return appendMessage(deps, ref, {
+    id: reply.id,
     authorKind: "agent",
     content: extractText(reply),
     parts: reply.parts,
