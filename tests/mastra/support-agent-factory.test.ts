@@ -59,6 +59,14 @@ describe("buildSupportInstructions", () => {
     expect(buildSupportInstructions([], false)).toContain("sem títulos nem tabelas");
   });
 
+  it("always points a password reset to Meu perfil instead of a ticket", () => {
+    const instructions = buildSupportInstructions([], false);
+
+    expect(instructions).toContain("'Meu perfil'");
+    expect(instructions).toContain("'Redefinir senha'");
+    expect(instructions).toContain("não abra chamado");
+  });
+
   it("always carries the privacy and scope rules", () => {
     const instructions = buildSupportInstructions([], false);
 
