@@ -120,12 +120,16 @@
                       "**/app/**",
                       "@/app",
                       "@/app/**",
-                      "**/features",
-                      "**/features/**",
-                      "@/features",
-                      "@/features/**"
+                      "**/components",
+                      "**/components/**",
+                      "**/viewmodels",
+                      "**/viewmodels/**",
+                      "@/components",
+                      "@/components/**",
+                      "@/viewmodels",
+                      "@/viewmodels/**"
                     ],
-                    "message": "Fronteira de camadas: services e domain nao importam mastra, app nem features."
+                    "message": "Fronteira de camadas: services e domain nao importam mastra, app, components nem viewmodels."
                   }
                 ]
               }
@@ -135,7 +139,7 @@
       }
     },
     {
-      "includes": ["src/features/**/*.tsx"],
+      "includes": ["src/components/**/*.tsx"],
       "linter": {
         "rules": {
           "style": {
