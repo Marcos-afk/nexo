@@ -11,8 +11,14 @@ const UNAVAILABLE_STATUS_CODES: ReadonlySet<number> = new Set([
 ]);
 const MAX_CAUSE_DEPTH = 5;
 const RETRY_AFTER_HEADER = "retry-after";
-const RETRY_IN_PATTERN = /retry in ([\d.]+)\s*s/i;
-const TIMEOUT_ERROR_NAMES: ReadonlySet<string> = new Set(["TimeoutError", "AbortError"]);
+const RETRY_IN_PATTERN = /retry in (?:(\d+)h)?(?:(\d+)m)?([\d.]+)s/i;
+const SECONDS_PER_MINUTE = 60;
+const SECONDS_PER_HOUR = 3600;
+const TIMEOUT_ERROR_NAMES: ReadonlySet<string> = new Set([
+  "TimeoutError",
+  "AbortError",
+  "MastraTimeoutError",
+]);
 
 export type ModelFailure = ModelRateLimitedError | ModelUnavailableError;
 
@@ -37,9 +43,23 @@ const parseSeconds = (value: string | undefined): number | null => {
   return Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds) : null;
 };
 
+const parseRetryInText = (text: string): number | null => {
+  const [, hours, minutes, seconds] = RETRY_IN_PATTERN.exec(text) ?? [];
+
+  return parseSeconds(
+    seconds === undefined
+      ? undefined
+      : String(
+          Number(hours ?? 0) * SECONDS_PER_HOUR +
+            Number(minutes ?? 0) * SECONDS_PER_MINUTE +
+            Number(seconds),
+        ),
+  );
+};
+
 const retryAfterSecondsOf = (error: APICallError): number | null =>
   parseSeconds(error.responseHeaders?.[RETRY_AFTER_HEADER]) ??
-  parseSeconds(RETRY_IN_PATTERN.exec(error.responseBody ?? error.message)?.[1]);
+  parseRetryInText(error.responseBody ?? error.message);
 
 const isUnavailableStatus = (statusCode: number | undefined): boolean =>
   statusCode !== undefined &&
