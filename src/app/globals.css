@@ -41,13 +41,25 @@
   --radius-md: 10px;
   --radius-lg: 14px;
 
-  --font-display: "Newsreader", serif;
-  --font-ui: "Schibsted Grotesk", sans-serif;
-  --font-data: "IBM Plex Mono", monospace;
+  --font-display: var(--font-newsreader), serif;
+  --font-ui: var(--font-schibsted), sans-serif;
+  --font-data: var(--font-plex-mono), monospace;
 }
 
 body {
   background: var(--color-desk);
   color: var(--color-ink);
   font-family: var(--font-ui);
+}
+
+[data-sonner-toaster] {
+  --normal-bg: var(--color-surface);
+  --normal-border: var(--color-rule);
+  --normal-text: var(--color-ink);
+  --error-bg: var(--color-danger-soft);
+  --error-border: var(--color-danger);
+  --error-text: var(--color-danger-text);
+  --success-bg: var(--color-success-soft);
+  --success-border: var(--color-success);
+  --success-text: var(--color-success-text);
 }
