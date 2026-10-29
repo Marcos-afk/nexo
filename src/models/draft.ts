@@ -23,6 +23,10 @@ export interface ConfirmDraftResponseProps extends DraftStatusResponseProps {
   readonly ticket: { readonly number: string; readonly title: string };
 }
 
+export interface DraftNoteValues {
+  note: string;
+}
+
 export interface DraftEditValues {
   title: string;
   description: string;
