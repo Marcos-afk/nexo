@@ -1,4 +1,5 @@
 import {
+  AnalystRequiredError,
   ConversationClosedError,
   MissingEmployeeContextError,
   ModelRateLimitedError,
@@ -10,6 +11,7 @@ import {
 } from "@/domain/errors";
 
 const HTTP_UNAUTHORIZED = 401;
+const HTTP_FORBIDDEN = 403;
 const HTTP_CONFLICT = 409;
 const HTTP_TOO_MANY_REQUESTS = 429;
 const HTTP_BAD_GATEWAY = 502;
@@ -32,6 +34,7 @@ const errorMappings = new Map<new (...args: never[]) => Error, ErrorMapping>([
   [MissingEmployeeContextError, { status: HTTP_UNAUTHORIZED, code: "missing_employee_context" }],
   [ConversationClosedError, { status: HTTP_CONFLICT, code: "conversation_closed" }],
   [UnauthenticatedError, { status: HTTP_UNAUTHORIZED, code: "unauthenticated" }],
+  [AnalystRequiredError, { status: HTTP_FORBIDDEN, code: "analyst_required" }],
   [UnknownEmployeeError, { status: HTTP_UNAUTHORIZED, code: "unknown_employee" }],
 ]);
 

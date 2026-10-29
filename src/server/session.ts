@@ -12,11 +12,15 @@ export const requireSession = async (auth: AuthService): Promise<AuthSession> =>
   const sessionId = await readSessionId();
   const session = sessionId ? await auth.resolve(sessionId) : null;
 
-  if (!session) {
-    throw new UnauthenticatedError();
+  if (session) {
+    return session;
   }
 
-  return session;
+  if (sessionId) {
+    (await cookies()).delete(SESSION_COOKIE);
+  }
+
+  throw new UnauthenticatedError();
 };
 
 export const endSession = async (auth: AuthService): Promise<void> => {

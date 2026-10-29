@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { respondWith, toErrorResponse } from "../../src/app/api/error-response";
 import {
+  AnalystRequiredError,
   ConversationClosedError,
   MissingEmployeeContextError,
   ModelRateLimitedError,
@@ -24,6 +25,7 @@ describe("toErrorResponse", () => {
     { error: new MissingEmployeeContextError(), status: 401, code: "missing_employee_context" },
     { error: new ConversationClosedError("c-1"), status: 409, code: "conversation_closed" },
     { error: new UnauthenticatedError(), status: 401, code: "unauthenticated" },
+    { error: new AnalystRequiredError(), status: 403, code: "analyst_required" },
     { error: new UnknownEmployeeError(), status: 401, code: "unknown_employee" },
   ])("maps $code to $status", async ({ error, status, code }) => {
     const response = toErrorResponse(error);
