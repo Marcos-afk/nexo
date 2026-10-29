@@ -2,12 +2,12 @@ import { APICallError } from "ai";
 import { describe, expect, it } from "vitest";
 import {
   type ChatOrchestratorDeps,
-  type ChatReply,
   handleChatMessage,
 } from "../../src/conversation/chat-orchestrator";
 import { ModelUnavailableError } from "../../src/domain/errors";
 import { createConversationService } from "../../src/services/conversations/conversation-service";
 import { createChatDeps } from "../support/chat-deps";
+import { agentMessagesOf, decisionOf, sendAs } from "../support/chat-flow";
 import {
   createFailingModel,
   createMockObjectModel,
@@ -25,34 +25,9 @@ const triageOf = (overrides: Record<string, unknown>) => ({
   ...overrides,
 });
 
-const drain = async (reply: ChatReply): Promise<void> => {
-  if (reply.kind === "stream") {
-    await reply.stream.pipeTo(new WritableStream());
-  }
-};
+const send = (deps: ChatOrchestratorDeps, text: string) => sendAs(deps, EMPLOYEE, text);
 
-const send = async (deps: ChatOrchestratorDeps, text: string): Promise<ChatReply> => {
-  const reply = await handleChatMessage(deps, EMPLOYEE, text);
-  await drain(reply);
-
-  return reply;
-};
-
-const agentMessages = async (deps: ChatOrchestratorDeps) => {
-  const service = createConversationService(deps.conversations);
-  const conversation = await service.getActive(EMPLOYEE);
-  const stored = await service.listMessages({
-    ownerId: EMPLOYEE,
-    conversationId: conversation?.id ?? "",
-  });
-
-  return stored.filter((message) => message.authorKind === "agent");
-};
-
-const decisionOf = async (deps: ChatOrchestratorDeps, messageId: string | undefined) =>
-  (await deps.conversations.database.query.decisions.findMany()).find(
-    (decision) => decision.messageId === messageId,
-  );
+const agentMessages = (deps: ChatOrchestratorDeps) => agentMessagesOf(deps, EMPLOYEE);
 
 const humanRequestTriage = triageOf({ intent: "human_request", signals: ["asks_for_human"] });
 

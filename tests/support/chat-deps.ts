@@ -1,5 +1,6 @@
 import type { MastraModelConfig } from "@mastra/core/llm";
 import type { ChatOrchestratorDeps } from "../../src/conversation/chat-orchestrator";
+import type { Database } from "../../src/db/client";
 import { createTriageAgent } from "../../src/mastra/agents/triage-agent";
 import { createDecisionService } from "../../src/services/decisions/decision-service";
 import { createDraftService } from "../../src/services/drafts/draft-service";
@@ -15,13 +16,15 @@ const NOW = "2026-10-28T10:00:00-03:00";
 export interface ChatDepsModels {
   readonly triage: MastraModelConfig;
   readonly support?: MastraModelConfig;
+  readonly database?: Database;
 }
 
 export const createChatDeps = async ({
   triage,
   support,
+  database: existing,
 }: ChatDepsModels): Promise<ChatOrchestratorDeps> => {
-  const database = await createSeededDatabase();
+  const database = existing ?? (await createSeededDatabase());
   const clock = createFixedClock(NOW);
   const ids = createSequentialIds("chat");
   const conversations = { database, clock, ids };
