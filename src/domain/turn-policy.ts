@@ -33,7 +33,7 @@ export type TurnDecision =
     };
 
 const toolsByIntent = {
-  how_to: ["searchHelpArticles"],
+  how_to: ["searchHelpArticles", "findSimilarTickets"],
   ticket_lookup: ["listMyTickets", "getTicket"],
   ticket_create: ["searchHelpArticles", "findSimilarTickets", "buildDraft"],
   human_request: [],
