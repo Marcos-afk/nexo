@@ -19,6 +19,7 @@ import {
 import { computeContactDueAt } from "../../domain/sla";
 import { isClosed } from "../../domain/ticket-rules";
 import { requireAnalyst } from "../analysts/require-analyst";
+import { announceConversation, announceMessage } from "../conversations/announcements";
 import {
   type Conversation,
   type ConversationServiceDeps,
@@ -96,6 +97,26 @@ const requireOwnedConversation = async (
   return conversation;
 };
 
+const applyTransition = async (
+  deps: HandoffServiceDeps,
+  updated: Conversation,
+  content: string,
+): Promise<void> => {
+  const message = await deps.database.transaction(async (transaction) => {
+    await transaction.update(conversations).set(updated).where(eq(conversations.id, updated.id));
+
+    return insertMessage(transaction, deps, {
+      conversationId: updated.id,
+      authorKind: "system",
+      authorId: null,
+      content,
+    });
+  });
+
+  announceMessage(deps, updated.employeeId, message);
+  announceConversation(deps, updated);
+};
+
 const assumeLinkedTicket = async (
   deps: HandoffServiceDeps,
   analystId: string,
@@ -140,18 +161,7 @@ export const requestHandoff = async (
     updatedAt: now,
   };
 
-  await deps.database.transaction(async (transaction) => {
-    await transaction
-      .update(conversations)
-      .set(updated)
-      .where(eq(conversations.id, conversationId));
-    await insertMessage(transaction, deps, {
-      conversationId,
-      authorKind: "system",
-      authorId: null,
-      content: transferredMessage,
-    });
-  });
+  await applyTransition(deps, updated, transferredMessage);
 
   return updated;
 };
@@ -174,18 +184,7 @@ export const assumeConversation = async (
     updatedAt: deps.clock.now(),
   };
 
-  await deps.database.transaction(async (transaction) => {
-    await transaction
-      .update(conversations)
-      .set(updated)
-      .where(eq(conversations.id, conversationId));
-    await insertMessage(transaction, deps, {
-      conversationId,
-      authorKind: "system",
-      authorId: null,
-      content: assumedMessage(analyst.name),
-    });
-  });
+  await applyTransition(deps, updated, assumedMessage(analyst.name));
 
   return updated;
 };
@@ -210,18 +209,7 @@ const releaseConversation = async (
     updatedAt: deps.clock.now(),
   };
 
-  await deps.database.transaction(async (transaction) => {
-    await transaction
-      .update(conversations)
-      .set(updated)
-      .where(eq(conversations.id, conversationId));
-    await insertMessage(transaction, deps, {
-      conversationId,
-      authorKind: "system",
-      authorId: null,
-      content: action === "return" ? returnedMessage : closedMessage,
-    });
-  });
+  await applyTransition(deps, updated, action === "return" ? returnedMessage : closedMessage);
 
   return updated;
 };
@@ -250,12 +238,16 @@ export const sendAnalystMessage = async (
   targetMode(conversation, "reply");
   requireAssignment(conversation, analystId);
 
-  return insertMessage(deps.database, deps, {
+  const message = await insertMessage(deps.database, deps, {
     conversationId,
     authorKind: "analyst",
     authorId: analystId,
     content,
   });
+
+  announceMessage(deps, conversation.employeeId, message);
+
+  return message;
 };
 
 export const listQueue = async (
