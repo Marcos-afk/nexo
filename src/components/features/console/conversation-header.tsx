@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
+import { TYPING_LABEL } from "@/constants/console";
 import type { ConsoleConversationProps } from "@/models/console";
 import { modeBadgeOf } from "@/utils/console-conversation";
 import { avatarToneOf } from "@/utils/console-format";
@@ -7,10 +8,11 @@ import { getUserAcronym } from "@/utils/get-user-acronym";
 
 interface ConversationHeaderProps {
   readonly conversation: ConsoleConversationProps;
+  readonly isTyping: boolean;
   readonly actions: ReactNode;
 }
 
-export function ConversationHeader({ conversation, actions }: ConversationHeaderProps) {
+export function ConversationHeader({ conversation, isTyping, actions }: ConversationHeaderProps) {
   const tone = avatarToneOf(conversation.employee.id);
   const badge = modeBadgeOf(conversation);
   const subtitle = [conversation.employee.department, conversation.ticket?.number]
@@ -30,7 +32,8 @@ export function ConversationHeader({ conversation, actions }: ConversationHeader
           {conversation.employee.name}
         </h1>
         <p className="flex items-center gap-1.5 truncate text-xs text-ink-3">
-          {conversation.employeeOnline && (
+          {isTyping && <span className="text-success-text italic">{TYPING_LABEL}</span>}
+          {!isTyping && conversation.employeeOnline && (
             <span className="flex items-center gap-1 font-semibold text-success-text">
               <span aria-hidden="true" className="size-1.5 rounded-full bg-success" />
               online

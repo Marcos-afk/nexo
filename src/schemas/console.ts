@@ -121,6 +121,11 @@ export const actionResponseSchema = z.looseObject({});
 
 export const eventSignalSchema = z.object({ conversationId: z.string() });
 
+export const messageEventSchema = z.object({
+  conversationId: z.string(),
+  authorKind: z.string(),
+});
+
 const ticketItemSchema = z.object({
   number: z.string(),
   title: z.string(),

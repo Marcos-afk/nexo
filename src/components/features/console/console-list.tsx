@@ -6,6 +6,7 @@ import type { ConsoleProps } from "@/models/console";
 import { useConsole } from "@/viewmodels/use-console";
 import { useConsoleAvailability } from "@/viewmodels/use-console-availability";
 import { useNow } from "@/viewmodels/use-now";
+import { useTypingConversations } from "@/viewmodels/use-typing-conversations";
 import { AvailabilityToggle } from "./availability-toggle";
 import { ConversationList } from "./conversation-list";
 import { FilterTabs } from "./filter-tabs";
@@ -21,6 +22,7 @@ export function ConsoleList({ initial }: ConsoleListProps) {
   const { availability, isSaving, onToggle } = useConsoleAvailability(initial.me.availability);
   const { id: selectedId } = useParams<{ id?: string }>();
   const now = useNow();
+  const typingIds = useTypingConversations();
 
   return (
     <section
@@ -44,6 +46,7 @@ export function ConsoleList({ initial }: ConsoleListProps) {
         items={overview.items}
         isSearching={isSearching}
         selectedId={selectedId ?? null}
+        typingIds={typingIds}
         now={now}
       />
     </section>

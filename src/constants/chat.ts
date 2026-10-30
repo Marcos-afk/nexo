@@ -4,6 +4,8 @@ export const CHAT_ENDPOINT = "/api/chat";
 export const HANDOFF_ENDPOINT = "/api/chat/handoff";
 export const CHAT_SESSION_ENDPOINT = "/api/chat/session";
 export const EVENTS_ENDPOINT = "/api/events";
+export const TYPING_ENDPOINT = "/api/chat/typing";
+export const TYPING_SIGNAL_INTERVAL_MS = 2000;
 export const SYNC_ERROR = "Não foi possível atualizar a conversa agora.";
 export const MESSAGE_LIMIT_WARNING_THRESHOLD = 25;
 
