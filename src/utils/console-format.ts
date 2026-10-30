@@ -75,11 +75,13 @@ export const labelViewOf = (label: ConsoleLabelProps, now: Date | null): Console
 };
 
 const AVATAR_TONES: readonly AvatarToneProps[] = [
-  { background: "bg-primary-soft", text: "text-primary-text" },
-  { background: "bg-success-soft", text: "text-success-text" },
-  { background: "bg-warning-soft", text: "text-warning-text" },
-  { background: "bg-violet-soft", text: "text-violet-text" },
-  { background: "bg-danger-soft", text: "text-danger-text" },
+  { background: "bg-avatar-blue", text: "text-avatar-blue-text" },
+  { background: "bg-avatar-orange", text: "text-avatar-orange-text" },
+  { background: "bg-avatar-violet", text: "text-avatar-violet-text" },
+  { background: "bg-avatar-green", text: "text-avatar-green-text" },
+  { background: "bg-avatar-rose", text: "text-avatar-rose-text" },
+  { background: "bg-avatar-gray", text: "text-avatar-gray-text" },
+  { background: "bg-avatar-amber", text: "text-avatar-amber-text" },
 ];
 
 export const avatarToneOf = (seed: string): AvatarToneProps => {

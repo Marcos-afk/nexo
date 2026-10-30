@@ -23,7 +23,7 @@ export function DraftActions({
   onCancel,
 }: DraftActionsProps) {
   return (
-    <div className="flex flex-col gap-2 rounded-b-2xl bg-desk px-3.5 py-2 pl-2">
+    <div className="flex flex-col gap-2 rounded-b-2xl border-t border-rule bg-desk px-3.5 py-2 pl-2">
       {error && (
         <p role="alert" className="px-1.5 text-sm text-danger-text">
           {error}
@@ -37,7 +37,9 @@ export function DraftActions({
         >
           {isWorking && <Loader2 size={ICON_SIZE} aria-hidden="true" className="animate-spin" />}
           Confirmar
-          <kbd className="rounded-sm bg-white/20 px-1.5 text-xs font-medium">{shortcutLabel}</kbd>
+          <kbd className="rounded-sm bg-white/14 px-1.25 py-px text-[11.5px] font-normal text-white/80">
+            {shortcutLabel}
+          </kbd>
         </Button.Root>
         {canEdit && (
           <Button.Root

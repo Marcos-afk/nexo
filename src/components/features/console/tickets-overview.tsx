@@ -1,3 +1,4 @@
+import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   allTicketsLabelOf,
@@ -6,7 +7,9 @@ import {
   THIS_CONVERSATION_LABEL,
 } from "@/constants/console";
 import type { ConversationTicketsProps } from "@/models/console";
-import { TicketRow } from "./ticket-row";
+import { CurrentTicketCard, TicketRow } from "./ticket-row";
+
+const ARROW_SIZE = 14;
 
 interface TicketsOverviewProps {
   readonly tickets: ConversationTicketsProps;
@@ -22,7 +25,7 @@ interface SectionProps {
 function Section({ title, children }: SectionProps) {
   return (
     <section className="flex flex-col gap-1">
-      <h3 className="px-2.5 text-xs font-semibold tracking-wide text-ink-3 uppercase">{title}</h3>
+      <h3 className="text-xs font-semibold text-ink-3">{title}</h3>
       <ul className="flex flex-col">{children}</ul>
     </section>
   );
@@ -37,13 +40,14 @@ export function TicketsOverview({ tickets, onOpen, onShowAll }: TicketsOverviewP
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-2">
+    <div className="flex flex-1 flex-col gap-8 overflow-y-auto px-5 pt-6 pb-5">
       {current.length > 0 && (
-        <Section title={THIS_CONVERSATION_LABEL}>
+        <section className="flex flex-col gap-3">
+          <h3 className="text-xs font-semibold text-ink-3">{THIS_CONVERSATION_LABEL}</h3>
           {current.map((item) => (
-            <TicketRow key={item.number} item={item} onOpen={onOpen} />
+            <CurrentTicketCard key={item.number} item={item} onOpen={onOpen} />
           ))}
-        </Section>
+        </section>
       )}
       {others.length > 0 && (
         <Section title={OTHER_TICKETS_LABEL}>
@@ -52,8 +56,9 @@ export function TicketsOverview({ tickets, onOpen, onShowAll }: TicketsOverviewP
           ))}
         </Section>
       )}
-      <Button.Root variant="outline" onClick={onShowAll} className="mx-2 h-9 rounded-lg text-xs">
+      <Button.Root variant="outline" onClick={onShowAll} className="h-9 gap-1.5 rounded-lg text-sm">
         {allTicketsLabelOf(tickets.employeeName)}
+        <ArrowUpRight size={ARROW_SIZE} aria-hidden="true" className="text-ink-3" />
       </Button.Root>
     </div>
   );

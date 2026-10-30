@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, MoreVertical, PanelRight, Search } from "lucide-react";
+import { Copy, EllipsisVertical, PanelRight, Search } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import {
   CLOSE_PANEL_LABEL,
@@ -10,12 +10,12 @@ import {
   SEARCH_CONVERSATION_LABEL,
 } from "@/constants/console";
 
-const ICON_SIZE = 17;
+const ICON_SIZE = 18;
 const MENU_ICON_SIZE = 15;
 const MENU_ITEM_CLASSES =
   "flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-ink hover:bg-desk";
 const ICON_BUTTON_CLASSES =
-  "flex size-9 cursor-pointer items-center justify-center rounded-lg text-ink-3 hover:bg-card hover:text-ink";
+  "flex size-9 cursor-pointer items-center justify-center rounded-full text-ink-2 hover:bg-card hover:text-ink";
 
 interface MenuItemProps {
   readonly label: string;
@@ -86,7 +86,7 @@ function ActionsMenu({ onCopySummary, onSearch }: ActionsMenuProps) {
         aria-label={MORE_ACTIONS_LABEL}
         className={ICON_BUTTON_CLASSES}
       >
-        <MoreVertical size={ICON_SIZE} aria-hidden="true" />
+        <EllipsisVertical size={ICON_SIZE} aria-hidden="true" />
       </button>
       {isOpen && (
         <MenuPopover onSearch={() => select(onSearch)} onCopy={() => select(onCopySummary)} />

@@ -9,7 +9,9 @@ import { useSignOut } from "@/viewmodels/use-sign-out";
 import { NavLink } from "./nav-link";
 import { UserCard } from "./user-card";
 
-const ICON_SIZE = 18;
+const ICON_SIZE = 16;
+const MARK_WIDTH = 20;
+const MARK_HEIGHT = 17;
 
 interface SidebarProps {
   readonly user: AuthUserProps | null;
@@ -22,8 +24,8 @@ export function Sidebar({ user }: SidebarProps) {
   return (
     <aside className="flex w-58 shrink-0 flex-col border-r border-rule px-3.5 pt-5 pb-3.5">
       <div className="flex items-center gap-2.5 px-2 text-ink">
-        <NexoMark className="text-primary" />
-        <span className="text-base font-bold tracking-tight">Nexo Assist</span>
+        <NexoMark className="text-primary" width={MARK_WIDTH} height={MARK_HEIGHT} />
+        <span className="text-base font-bold tracking-[-0.2px]">Nexo Assist</span>
       </div>
 
       <nav aria-label="Principal" className="mt-5.5 flex flex-col gap-0.5">

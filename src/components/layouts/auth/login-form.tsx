@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import { ArrowRight, Check, Eye, EyeOff, Loader2, LockKeyhole, Mail } from "lucide-react";
 import Link from "next/link";
 import type { FieldErrors, UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,9 @@ import { FORGOT_PASSWORD_PATH } from "@/constants/routes";
 import type { LoginFormValues } from "@/models/auth";
 import { useLogin } from "@/viewmodels/use-login";
 
-const ICON_SIZE = 18;
-const LABEL_CLASS = "text-sm font-medium text-ink";
+const ICON_SIZE = 16;
+const CHECK_SIZE = 12;
+const LABEL_CLASS = "text-[13.5px] font-medium text-ink";
 
 interface FieldProps {
   readonly form: UseFormReturn<LoginFormValues>;
@@ -26,7 +27,7 @@ function EmailField({ form, errors }: FieldProps) {
   const error = errors.email?.message;
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <label htmlFor="email" className={LABEL_CLASS}>
         E-mail corporativo
       </label>
@@ -53,21 +54,21 @@ function PasswordField({ form, errors, showPassword, onToggleShowPassword }: Pas
   const error = errors.password?.message;
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <label htmlFor="password" className={LABEL_CLASS}>
           Senha
         </label>
         <Link
           href={FORGOT_PASSWORD_PATH}
-          className="text-sm font-semibold text-primary-text hover:underline"
+          className="text-[13.5px] font-medium text-primary-text hover:underline"
         >
           Esqueci minha senha
         </Link>
       </div>
       <Input.Root state={error ? "invalid" : "default"}>
         <Input.Icon>
-          <Lock size={ICON_SIZE} />
+          <LockKeyhole size={ICON_SIZE} />
         </Input.Icon>
         <Input.Field
           id="password"
@@ -92,7 +93,12 @@ function PasswordField({ form, errors, showPassword, onToggleShowPassword }: Pas
 
 function SubmitButton({ isSubmitting }: { readonly isSubmitting: boolean }) {
   return (
-    <Button.Root type="submit" size="lg" disabled={isSubmitting}>
+    <Button.Root
+      type="submit"
+      size="lg"
+      disabled={isSubmitting}
+      className="shadow-[0_1px_2px_#0062c433,0_6px_16px_#0062c426]"
+    >
       {isSubmitting && <Loader2 size={ICON_SIZE} className="animate-spin" />}
       {isSubmitting ? "Entrando…" : "Entrar"}
       {!isSubmitting && <ArrowRight size={ICON_SIZE} />}
@@ -104,13 +110,17 @@ export function LoginForm() {
   const { form, errors, onSubmit, showPassword, toggleShowPassword, isSubmitting } = useLogin();
 
   return (
-    <form className="flex w-full max-w-100 flex-col gap-6" onSubmit={onSubmit} noValidate>
-      <div className="flex flex-col gap-1.5">
-        <h2 className="font-display text-4xl leading-none tracking-tight text-ink">Entrar</h2>
-        <p className="text-sm text-ink-3">Use seu e-mail corporativo e a senha da rede Nexo.</p>
+    <form className="flex w-full max-w-95 flex-col gap-7" onSubmit={onSubmit} noValidate>
+      <div className="flex flex-col gap-2">
+        <h2 className="font-display text-[40px] leading-[1.1] tracking-[-0.8px] text-ink">
+          Entrar
+        </h2>
+        <p className="text-[15.5px] leading-normal text-ink-3">
+          Use seu e-mail corporativo e a senha da rede Nexo.
+        </p>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4.5">
         <EmailField form={form} errors={errors} />
         <PasswordField
           form={form}
@@ -118,13 +128,25 @@ export function LoginForm() {
           showPassword={showPassword}
           onToggleShowPassword={toggleShowPassword}
         />
-        <label className="flex cursor-pointer items-center gap-2.5 text-sm text-ink-2">
-          <input type="checkbox" className="size-4 accent-primary" {...form.register("remember")} />
+        <label className="flex cursor-pointer items-center gap-2.25 pt-0.5 text-[13.5px] text-ink-2">
+          <span className="relative flex size-4.5 shrink-0">
+            <input
+              type="checkbox"
+              className="peer size-full cursor-pointer appearance-none rounded-sm border border-border-strong bg-paper checked:border-cta checked:bg-cta focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              {...form.register("remember")}
+            />
+            <Check
+              size={CHECK_SIZE}
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 m-auto text-white opacity-0 peer-checked:opacity-100"
+            />
+          </span>
           Manter conectado neste computador
         </label>
       </div>
 
       <SubmitButton isSubmitting={isSubmitting} />
+      <div aria-hidden="true" className="border-t border-rule pt-4" />
     </form>
   );
 }
