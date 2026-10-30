@@ -29,6 +29,15 @@ const conversation = (overrides: Partial<ConsoleConversationProps>): ConsoleConv
   ticket: null,
   assignedAnalyst: null,
   messages: [],
+  usage: {
+    turns: 0,
+    tokensIn: 0,
+    tokensOut: 0,
+    totalTokens: 0,
+    averageLatencyMs: null,
+    maxLatencyMs: null,
+    models: [],
+  },
   ...overrides,
 });
 

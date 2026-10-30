@@ -8,9 +8,11 @@ import { ConversationNotFoundError } from "../../domain/errors";
 import type { EventPublisher } from "../../domain/realtime";
 import type { TicketPriority } from "../../domain/sla";
 import type { TicketStatus } from "../../domain/ticket";
+import type { UsageSummary } from "../../domain/usage";
 import type { Clock } from "../../lib/clock";
 import { requireAnalyst } from "../analysts/require-analyst";
 import { announceConversation } from "../conversations/announcements";
+import { conversationUsage } from "../usage/usage-service";
 
 const MAX_CONVERSATION_MESSAGES = 200;
 
@@ -53,6 +55,7 @@ export interface ConsoleConversation {
     readonly level: AnalystLevel | null;
   } | null;
   readonly messages: readonly ConsoleMessage[];
+  readonly usage: UsageSummary;
 }
 
 const assignee = alias(employees, "assignee");
@@ -138,6 +141,7 @@ export const getConsoleConversation = async (
   }
 
   const rows = await loadMessages(database, conversationId);
+  const usage = await conversationUsage({ database }, conversationId);
   const analystIds = rows.flatMap((message) => (message.authorId ? [message.authorId] : []));
   const authors = await loadAuthors(database, [...new Set(analystIds)]);
   const lastEmployeeAt = Math.max(
@@ -161,6 +165,7 @@ export const getConsoleConversation = async (
     ticket: row.ticket,
     assignedAnalyst: row.assignee,
     messages: rows.map((message) => toConsoleMessage(message, authors, lastEmployeeAt)),
+    usage,
   };
 };
 

@@ -219,6 +219,7 @@ export interface ConsoleConversationDto {
   readonly ticket: ConsoleConversation["ticket"];
   readonly assignedAnalyst: ConsoleConversation["assignedAnalyst"];
   readonly messages: readonly ConsoleMessageDto[];
+  readonly usage: ConsoleConversation["usage"];
 }
 
 export const toConsoleConversationDto = (
@@ -239,6 +240,7 @@ export const toConsoleConversationDto = (
     ...message,
     createdAt: message.createdAt.toISOString(),
   })),
+  usage: conversation.usage,
 });
 
 export interface ConsoleTicketItemDto {
