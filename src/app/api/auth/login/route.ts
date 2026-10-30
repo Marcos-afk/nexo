@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { respondWith } from "@/app/api/error-response";
+import { MAX_EMAIL_LENGTH, MAX_PASSWORD_LENGTH } from "@/domain/input-limits";
 import { getContainer } from "@/server/container";
 import { startSessionCookie } from "@/server/session";
 
@@ -9,8 +10,8 @@ const HTTP_BAD_REQUEST = 400;
 const INVALID_LOGIN_MESSAGE = "Informe um e-mail corporativo válido e a senha.";
 
 const bodySchema = z.object({
-  email: z.email(),
-  password: z.string().min(1),
+  email: z.email().max(MAX_EMAIL_LENGTH),
+  password: z.string().min(1).max(MAX_PASSWORD_LENGTH),
   remember: z.boolean().default(true),
 });
 

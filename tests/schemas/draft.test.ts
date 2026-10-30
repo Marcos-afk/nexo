@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CRITICAL_NEEDS_WIDE_IMPACT_MESSAGE } from "../../src/domain/affected-scope";
 import {
   confirmDraftResponseSchema,
   draftEditSchema,
@@ -32,6 +33,21 @@ const messagesOf = (values: unknown): Record<string, string> => {
 describe("draftEditSchema", () => {
   it.each([
     { name: "valid", values: validEdit, expected: {} },
+    {
+      name: "critical priority for a single person",
+      values: { ...validEdit, priority: "critical", affected: "Somente eu" },
+      expected: { priority: CRITICAL_NEEDS_WIDE_IMPACT_MESSAGE },
+    },
+    {
+      name: "critical priority without saying who is affected",
+      values: { ...validEdit, priority: "critical", affected: "" },
+      expected: { priority: CRITICAL_NEEDS_WIDE_IMPACT_MESSAGE },
+    },
+    {
+      name: "critical priority for the whole company",
+      values: { ...validEdit, priority: "critical", affected: "Toda a empresa" },
+      expected: {},
+    },
     {
       name: "empty title and description",
       values: { ...validEdit, title: "  ", description: "" },

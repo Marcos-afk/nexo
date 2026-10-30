@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CRITICAL_NEEDS_WIDE_IMPACT_MESSAGE, isPriorityConsistent } from "./affected-scope";
 import { ticketPriorities } from "./sla";
 import { ticketTypes } from "./ticket";
 import { ticketCategories } from "./ticket-category";
@@ -15,5 +16,10 @@ export const createTicketInputSchema = z.object({
   priority: z.enum(ticketPriorities),
   affected: z.string().min(1).nullable(),
 });
+
+export const newTicketInputSchema = createTicketInputSchema.refine(
+  ({ priority, affected }) => isPriorityConsistent(priority, affected),
+  { path: ["priority"], message: CRITICAL_NEEDS_WIDE_IMPACT_MESSAGE },
+);
 
 export type CreateTicketInput = z.infer<typeof createTicketInputSchema>;

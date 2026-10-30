@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { MAX_EMAIL_LENGTH, MAX_PASSWORD_LENGTH } from "../../src/domain/input-limits";
 import {
   EMPTY_EMAIL_MESSAGE,
   EMPTY_PASSWORD_MESSAGE,
   forgotPasswordResponseSchema,
   forgotPasswordSchema,
   INVALID_EMAIL_MESSAGE,
+  LONG_EMAIL_MESSAGE,
+  LONG_PASSWORD_MESSAGE,
   loginSchema,
 } from "../../src/schemas/auth";
 
@@ -47,6 +50,30 @@ describe("loginSchema", () => {
       expected: {},
     },
   ])("$name", ({ values, expected }) => {
+    expect(messagesOf(values)).toEqual(expected);
+  });
+
+  it.each([
+    {
+      name: "an e-mail over the limit",
+      values: { email: `${"a".repeat(MAX_EMAIL_LENGTH)}@nexo.test`, password: "x", remember: true },
+      expected: { email: LONG_EMAIL_MESSAGE },
+    },
+    {
+      name: "a password over the limit",
+      values: {
+        email: "ana@nexo.test",
+        password: "x".repeat(MAX_PASSWORD_LENGTH + 1),
+        remember: true,
+      },
+      expected: { password: LONG_PASSWORD_MESSAGE },
+    },
+    {
+      name: "a password exactly at the limit",
+      values: { email: "ana@nexo.test", password: "x".repeat(MAX_PASSWORD_LENGTH), remember: true },
+      expected: {},
+    },
+  ])("limits $name", ({ values, expected }) => {
     expect(messagesOf(values)).toEqual(expected);
   });
 
