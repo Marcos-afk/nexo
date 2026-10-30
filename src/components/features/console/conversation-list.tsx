@@ -10,10 +10,17 @@ interface ConversationListProps {
   readonly items: readonly ConsoleItemProps[];
   readonly isSearching: boolean;
   readonly selectedId: string | null;
+  readonly typingIds: ReadonlySet<string>;
   readonly now: Date | null;
 }
 
-export function ConversationList({ items, isSearching, selectedId, now }: ConversationListProps) {
+export function ConversationList({
+  items,
+  isSearching,
+  selectedId,
+  typingIds,
+  now,
+}: ConversationListProps) {
   if (items.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-1 px-6 text-center">
@@ -28,7 +35,13 @@ export function ConversationList({ items, isSearching, selectedId, now }: Conver
   return (
     <ul aria-label="Conversas" className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-2">
       {items.map((item) => (
-        <ConversationItem key={item.id} item={item} isSelected={item.id === selectedId} now={now} />
+        <ConversationItem
+          key={item.id}
+          item={item}
+          isSelected={item.id === selectedId}
+          isTyping={typingIds.has(item.id)}
+          now={now}
+        />
       ))}
     </ul>
   );

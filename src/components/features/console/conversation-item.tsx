@@ -1,7 +1,7 @@
 import { cx } from "class-variance-authority";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { conversationHrefOf, NO_MESSAGES_LABEL } from "@/constants/console";
+import { conversationHrefOf, NO_MESSAGES_LABEL, TYPING_LABEL } from "@/constants/console";
 import type { ConsoleItemProps } from "@/models/console";
 import { avatarToneOf, labelViewOf, timeLabelOf } from "@/utils/console-format";
 import { getUserAcronym } from "@/utils/get-user-acronym";
@@ -9,10 +9,11 @@ import { getUserAcronym } from "@/utils/get-user-acronym";
 interface ConversationItemProps {
   readonly item: ConsoleItemProps;
   readonly isSelected: boolean;
+  readonly isTyping: boolean;
   readonly now: Date | null;
 }
 
-export function ConversationItem({ item, isSelected, now }: ConversationItemProps) {
+export function ConversationItem({ item, isSelected, isTyping, now }: ConversationItemProps) {
   const tone = avatarToneOf(item.employee.id);
   const label = labelViewOf(item.label, now);
   const lastAt = item.preview?.at ?? item.updatedAt;
@@ -44,9 +45,15 @@ export function ConversationItem({ item, isSelected, now }: ConversationItemProp
             {now && <time className="text-xs text-ink-3">{timeLabelOf(lastAt, now)}</time>}
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="min-w-0 flex-1 truncate text-sm text-ink-3">
-              {item.preview?.text ?? NO_MESSAGES_LABEL}
-            </span>
+            {isTyping ? (
+              <span className="min-w-0 flex-1 truncate text-sm text-success-text italic">
+                {TYPING_LABEL}
+              </span>
+            ) : (
+              <span className="min-w-0 flex-1 truncate text-sm text-ink-3">
+                {item.preview?.text ?? NO_MESSAGES_LABEL}
+              </span>
+            )}
             {item.unread > 0 && (
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-cta px-1.5 text-xs font-bold text-white">
                 <span className="sr-only">Não lidas: </span>
