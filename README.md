@@ -2,7 +2,32 @@
 
 Assistente de service desk de TI em formato de chat, feito para o desafio técnico Beyond the Bytes. O funcionário descreve o problema; o assistente consulta os chamados dele e a central de ajuda, monta **rascunhos** de chamado para ele confirmar e chama um analista quando precisa. Um console separado deixa o analista ver a fila, assumir, responder, devolver ao agent e encerrar, com o raciocínio do agent à vista.
 
-Índice: [Como rodar](#como-rodar) · [Visão geral da arquitetura](#visão-geral-da-arquitetura) · [Como o agent decide](#como-o-agent-decide) · [Como garanti a qualidade](#como-garanti-a-qualidade-das-decisões) · [Trade-offs](#principais-trade-offs) · [O que faria com mais tempo](#o-que-faria-com-mais-tempo) · [Escolha do modelo](#escolha-do-modelo) · [O que é simulado](#o-que-é-simulado) · [Privacidade](#privacidade)
+Índice: [Usuários de exemplo](#usuários-de-exemplo) · [Como rodar](#como-rodar) · [Banco de dados](#banco-de-dados) · [Visão geral da arquitetura](#visão-geral-da-arquitetura) · [Como o agent decide](#como-o-agent-decide) · [Como garanti a qualidade](#como-garanti-a-qualidade-das-decisões) · [Trade-offs](#principais-trade-offs) · [O que faria com mais tempo](#o-que-faria-com-mais-tempo) · [Escolha do modelo](#escolha-do-modelo) · [O que é simulado](#o-que-é-simulado) · [Privacidade](#privacidade)
+
+## Usuários de exemplo
+
+Entre com o e-mail corporativo e **qualquer senha**. Todos os dados são fictícios e vêm do `pnpm db:seed`.
+
+**Funcionários** (abrem o chat em `/`):
+
+| E-mail               | Nome           | Departamento     | Situação inicial                                                                                       |
+| -------------------- | -------------- | ---------------- | ------------------------------------------------------------------------------------------------------ |
+| `ana@nexo.test`      | Ana Souza      | Financeiro       | uma conversa com o agent, com um rascunho de chamado pendente, e outra já transferida para um analista |
+| `carla@nexo.test`    | Carla Mendes   | Controladoria    | conversa transferida, aguardando um analista                                                           |
+| `bruno@nexo.test`    | Bruno Tavares  | Logística        | conversa em que o agent pediu ajuda por falta de segurança (confiança de 41%)                          |
+| `diego@nexo.test`    | Diego Ramos    | Operações        | conversa com o agent, com um chamado de VPN em aberto                                                  |
+| `elisa@nexo.test`    | Elisa Prado    | Recursos Humanos | conversa com o agent, com um chamado criado                                                            |
+| `fabio@nexo.test`    | Fábio Nunes    | Compras          | conversa encerrada, resolvida pelo agent                                                               |
+| `gabriela@nexo.test` | Gabriela Rocha | Marketing        | conversa encerrada, resolvida pelo agent                                                               |
+
+**Analistas** (abrem o console em `/console`):
+
+| E-mail             | Nome        | Nível | Disponibilidade |
+| ------------------ | ----------- | ----- | --------------- |
+| `rafael@nexo.test` | Rafael Lima | N2    | disponível      |
+| `lia@nexo.test`    | Lia Torres  | N1    | ausente         |
+
+Um e-mail que não está na lista é recusado. Para ver o fluxo completo, entre como funcionário em uma janela e como analista em outra (ou em outro perfil do navegador, porque a sessão é um cookie só).
 
 ## Como rodar
 
@@ -15,8 +40,7 @@ pnpm db:seed                 # recria o banco de desenvolvimento com dados de ex
 pnpm dev                     # http://localhost:3000
 ```
 
-- **Chave do modelo:** `GOOGLE_GENERATIVE_AI_API_KEY` (Google AI Studio, plano gratuito) vai só em `.env.local`, que o Git ignora. Sem ela o app abre e o login funciona, mas o assistente não responde. Os testes **nunca** chamam o modelo.
-- **Usuários de exemplo** (qualquer senha): `ana@nexo.test`, `carla@nexo.test` e outros funcionários; `rafael@nexo.test` é analista.
+- **Chave do modelo:** `GOOGLE_GENERATIVE_AI_API_KEY` (Google AI Studio, plano gratuito) vai só em `.env.local`, que o Git ignora. A chave é opcional para abrir o app: deixe a linha em branco, como vem no `.env.example`, e o login e o console funcionam, mas o chat responde que o assistente está indisponível. Os testes **nunca** chamam o modelo.
 - **Reiniciar os dados:** `pnpm db:seed` apaga e recria todas as tabelas. Há conversas em vários estados (com o agent, transferida, encerrada) e chamados em situações variadas (aberto, vencido, resolvido recentemente, de outras pessoas).
 - **Produção local:** `pnpm build` e `pnpm start`. O tempo real (SSE) só se comporta como em produção nesse modo.
 
@@ -28,6 +52,15 @@ pnpm dev                     # http://localhost:3000
 | `pnpm mastra:dev`   | Mastra Studio, para inspecionar os agents                |
 
 Variáveis de ambiente (`.env.example`): `GOOGLE_GENERATIVE_AI_API_KEY` e `LEGACY_OUTAGE_SECONDS` (segundos de queda simulada do sistema de chamados ao subir o servidor; `0` desliga).
+
+## Banco de dados
+
+Os dados ficam em **SQLite (libSQL), em arquivos locais**, acessados pelo **Drizzle ORM**. Não é preciso instalar nem subir nenhum servidor de banco.
+
+- **Onde:** a pasta `data/` (criada sozinha e ignorada pelo Git) guarda `nexo.db`, com funcionários, chamados, conversas, mensagens, rascunhos e decisões, e `mastra.db`, com os traces do Mastra. Os dados sobrevivem a reinício.
+- **Migrações:** ficam versionadas em `src/db/migrations` e são aplicadas **automaticamente**, tanto no `pnpm db:seed` quanto ao subir o servidor. Se mudar o schema (`src/db/schema.ts`), gere uma nova com `pnpm db:generate`.
+- **Primeira execução:** rode `pnpm db:seed` **uma vez** antes do primeiro `pnpm dev` ou `pnpm start`. Sem isso o banco fica vazio e nenhum e-mail de exemplo entra.
+- **Zerar os dados:** `pnpm db:seed` apaga e recria todas as tabelas; apagar a pasta `data/` também serve. O comando é bloqueado em produção (`NODE_ENV=production`).
 
 ## Visão geral da arquitetura
 
