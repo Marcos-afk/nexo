@@ -39,6 +39,8 @@ function useConsoleData(initial: ConsoleProps, filter: ConsoleFilter, query: str
 
   useConsoleEvents(() => void refresh(filter, query));
 
+  const retry = () => void refresh(filter, query);
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -47,18 +49,19 @@ function useConsoleData(initial: ConsoleProps, filter: ConsoleFilter, query: str
     return () => controller.abort();
   }, [filter, query]);
 
-  return { overview, error };
+  return { overview, error, retry };
 }
 
 export function useConsole(initial: ConsoleProps) {
   const [filter, setFilter] = useState<ConsoleFilter>("all");
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query.trim(), SEARCH_DEBOUNCE_MS);
-  const { overview, error } = useConsoleData(initial, filter, debouncedQuery);
+  const { overview, error, retry } = useConsoleData(initial, filter, debouncedQuery);
 
   return {
     overview,
     error,
+    onRetry: retry,
     filter,
     query,
     isSearching: debouncedQuery !== "",

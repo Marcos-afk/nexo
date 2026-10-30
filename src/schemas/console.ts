@@ -2,6 +2,7 @@ import { z } from "zod";
 import { analystAvailabilities, consoleFilters } from "@/domain/console";
 import { conversationModes, messageAuthorKinds } from "@/domain/conversation";
 import { analystLevels } from "@/domain/employee";
+import { MAX_ANALYST_REPLY_LENGTH } from "@/domain/input-limits";
 import { ticketPriorities } from "@/domain/sla";
 import { ticketEventKinds, ticketStatuses, ticketTypes } from "@/domain/ticket";
 import type {
@@ -72,7 +73,7 @@ export const availabilityResponseSchema = z.object({
   availability: z.enum(analystAvailabilities),
 });
 
-const MAX_REPLY_LENGTH = 2000;
+const MAX_REPLY_LENGTH = MAX_ANALYST_REPLY_LENGTH;
 
 export const EMPTY_REPLY_MESSAGE = "Escreva a resposta antes de enviar.";
 export const LONG_REPLY_MESSAGE = `A resposta pode ter até ${MAX_REPLY_LENGTH} caracteres.`;
