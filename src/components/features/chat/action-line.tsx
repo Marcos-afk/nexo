@@ -6,7 +6,7 @@ const ICON_SIZE = 12;
 
 const ACTION_ICONS = {
   running: <Loader2 size={ICON_SIZE} aria-hidden="true" className="animate-spin text-ink-3" />,
-  done: <Check size={ICON_SIZE} aria-hidden="true" className="text-success" />,
+  done: <Check size={ICON_SIZE} aria-hidden="true" className="text-ink-3" />,
   failed: <X size={ICON_SIZE} aria-hidden="true" className="text-danger" />,
 } as const satisfies Record<ChatActionStatusType, ReactNode>;
 

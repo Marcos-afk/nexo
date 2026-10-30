@@ -31,11 +31,11 @@ type InputActionProps = ButtonHTMLAttributes<HTMLButtonElement>;
 type InputErrorProps = HTMLAttributes<HTMLParagraphElement>;
 
 const inputVariants = cva(
-  "group flex h-11 items-center gap-2.5 rounded-md border bg-paper px-3.5 transition focus-within:border-primary",
+  "group flex h-11 items-center gap-2.5 rounded-md border bg-paper pr-2 pl-3.5 shadow-[0_1px_2px_#1b24310a] transition focus-within:border-cta focus-within:shadow-[0_0_0_0.5px_var(--color-cta)]",
   {
     variants: {
       state: {
-        default: "border-rule",
+        default: "border-ink/12",
         invalid: "border-danger",
       },
     },
@@ -54,7 +54,7 @@ function Field({ className, ...props }: InputFieldProps) {
     <input
       data-slot="input-field"
       className={cx(
-        "min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-subtle",
+        "min-w-0 flex-1 bg-transparent text-[14.5px] text-ink outline-none placeholder:text-subtle",
         className,
       )}
       {...props}
@@ -89,7 +89,7 @@ function Icon({ className, ...props }: InputIconProps) {
   return (
     <span
       data-slot="input-icon"
-      className={cx("flex items-center text-ink-3 group-focus-within:text-primary", className)}
+      className={cx("flex items-center text-ink-3 group-focus-within:text-primary-text", className)}
       {...props}
     />
   );
@@ -100,7 +100,10 @@ function Action({ className, type = "button", ...props }: InputActionProps) {
     <button
       data-slot="input-action"
       type={type}
-      className={cx("flex items-center rounded-sm p-1 text-ink-3 hover:text-ink", className)}
+      className={cx(
+        "flex size-7.5 items-center justify-center rounded-sm text-ink-3 hover:text-ink",
+        className,
+      )}
       {...props}
     />
   );

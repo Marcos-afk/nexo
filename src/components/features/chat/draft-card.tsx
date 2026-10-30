@@ -1,12 +1,11 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { CARD_CLASS } from "@/constants/chat";
 import type { DraftProps } from "@/models/draft";
 import { useDraftCard } from "@/viewmodels/use-draft-card";
 import { DraftActions } from "./draft-actions";
 import { DraftEditForm } from "./draft-edit-form";
 import { DraftNoteForm } from "./draft-note-form";
 import { DraftSummary } from "./draft-summary";
-
-const CARD_CLASS = "w-full max-w-150 rounded-2xl border border-ink/10 bg-paper";
 
 type DraftCardState = ReturnType<typeof useDraftCard>;
 
@@ -54,7 +53,7 @@ export function DraftCard({ draftId }: DraftCardProps) {
   }
 
   if (draft === null) {
-    return <Skeleton className="h-44 w-full max-w-150 rounded-2xl" />;
+    return <Skeleton className="h-44 w-full rounded-2xl" />;
   }
 
   return (

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { TYPING_LABEL } from "@/constants/console";
 import type { ConsoleConversationProps } from "@/models/console";
-import { modeBadgeOf } from "@/utils/console-conversation";
+import { isAssignedToViewer, modeBadgeOf } from "@/utils/console-conversation";
 import { avatarToneOf } from "@/utils/console-format";
 import { getUserAcronym } from "@/utils/get-user-acronym";
 
@@ -20,15 +20,15 @@ export function ConversationHeader({ conversation, isTyping, actions }: Conversa
     .join(" · ");
 
   return (
-    <header className="flex flex-wrap items-center gap-3 border-b border-rule px-6 py-3.5">
+    <header className="flex h-16 items-center gap-3 border-b border-rule pr-4 pl-5">
       <span
         aria-hidden="true"
-        className={`flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ${tone.background} ${tone.text}`}
+        className={`flex size-10 shrink-0 items-center justify-center rounded-full text-[14.5px] font-semibold ${tone.background} ${tone.text}`}
       >
         {getUserAcronym(conversation.employee.name)}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <h1 className="truncate text-lg font-bold tracking-tight text-ink">
+        <h1 className="truncate text-[15.5px] font-semibold text-ink">
           {conversation.employee.name}
         </h1>
         <p className="flex items-center gap-1.5 truncate text-xs text-ink-3">
@@ -42,12 +42,14 @@ export function ConversationHeader({ conversation, isTyping, actions }: Conversa
           {subtitle}
         </p>
       </div>
-      <div className="flex items-center gap-1.5">
-        <Badge.Root tone={badge.tone}>{badge.text}</Badge.Root>
-        {conversation.handoffLevel && conversation.mode === "awaiting_analyst" && (
-          <Badge.Root tone="violet">Suporte {conversation.handoffLevel}</Badge.Root>
-        )}
-      </div>
+      {!isAssignedToViewer(conversation) && (
+        <div className="flex items-center gap-1.5">
+          <Badge.Root tone={badge.tone}>{badge.text}</Badge.Root>
+          {conversation.handoffLevel && conversation.mode === "awaiting_analyst" && (
+            <Badge.Root tone="violet">Suporte {conversation.handoffLevel}</Badge.Root>
+          )}
+        </div>
+      )}
       {actions}
     </header>
   );
