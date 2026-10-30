@@ -13,6 +13,7 @@ import { ConversationHeader } from "./conversation-header";
 import { ConversationMessages } from "./conversation-messages";
 import { ConversationSearch } from "./conversation-search";
 import { TicketsPanel } from "./tickets-panel";
+import { UsageLine } from "./usage-line";
 
 interface ConversationViewProps {
   readonly initial: ConsoleConversationProps;
@@ -46,6 +47,7 @@ export function ConversationView({ initial, decisionMessageId }: ConversationVie
         />
         {search.isOpen && <ConversationSearch {...search} />}
         <CaseSummary conversation={conversation} />
+        <UsageLine usage={conversation.usage} />
         <ConversationMessages
           messages={conversation.messages}
           employeeName={conversation.employee.name}
