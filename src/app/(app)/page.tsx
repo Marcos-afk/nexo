@@ -32,5 +32,10 @@ async function fetchChatSession(): Promise<ChatSession> {
 export default async function Chat() {
   const [messages, session] = await Promise.all([fetchChatHistory(), fetchChatSession()]);
 
-  return <ChatPanel initialMessages={messages} initialSession={session} />;
+  return (
+    <>
+      <h1 className="sr-only">Atendimento</h1>
+      <ChatPanel initialMessages={messages} initialSession={session} />
+    </>
+  );
 }

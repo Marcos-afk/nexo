@@ -1,4 +1,5 @@
 export const MAX_CHAT_MESSAGE_LENGTH = 2000;
 export const MAX_CHAT_MESSAGES = 200;
+export const MAX_ANALYST_REPLY_LENGTH = 2000;
 export const MAX_EMAIL_LENGTH = 254;
 export const MAX_PASSWORD_LENGTH = 128;
