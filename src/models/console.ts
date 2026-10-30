@@ -37,7 +37,7 @@ export interface ConversationActionsProps {
   readonly onAssume: () => void;
   readonly onReturn: () => void;
   readonly onClose: () => void;
-  readonly onReply: (content: string) => void;
+  readonly onReply: (content: string) => Promise<boolean>;
 }
 
 export type ConversationTicketsProps = ConversationTicketsDto;

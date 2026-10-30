@@ -7,6 +7,7 @@ import { MAX_CHAT_MESSAGE_LENGTH } from "@/domain/input-limits";
 import type { ChatCounterProps, ChatNoticeToneType } from "@/models/chat";
 import { lengthCounterOf } from "@/utils/chat-state";
 import { useComposer } from "@/viewmodels/use-composer";
+import { useTypingSignal } from "@/viewmodels/use-typing-signal";
 
 const ICON_SIZE = 16;
 
@@ -27,6 +28,7 @@ interface ComposerProps {
 export function Composer({ onSend, isBusy, isDisabled, placeholder, counter }: ComposerProps) {
   const { text, inputRef, canSend, onChange, onKeyDown, onSubmit } = useComposer({
     onSend,
+    onTyping: useTypingSignal(),
     isBusy,
     isDisabled,
   });

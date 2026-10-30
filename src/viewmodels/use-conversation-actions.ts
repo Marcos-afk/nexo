@@ -17,13 +17,17 @@ export function useConversationActions({
 }: UseConversationActionsProps): ConversationActionsProps {
   const [isBusy, setIsBusy] = useState(false);
 
-  const run = async (path: string, body?: unknown) => {
+  const run = async (path: string, body?: unknown): Promise<boolean> => {
     setIsBusy(true);
 
     try {
       await api.post(`${conversationPathOf(conversationId)}/${path}`, body, actionResponseSchema);
+
+      return true;
     } catch (error) {
       toast.error(errorMessageOf(error, ACTION_ERROR));
+
+      return false;
     } finally {
       await onDone();
       setIsBusy(false);
@@ -35,6 +39,6 @@ export function useConversationActions({
     onAssume: () => void run("assume"),
     onReturn: () => void run("return"),
     onClose: () => void run("close"),
-    onReply: (content) => void run("messages", { content }),
+    onReply: (content) => run("messages", { content }),
   };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import type { ConsoleMessageProps } from "@/models/console";
+import type { ConsoleMessageProps, ConversationEntryType } from "@/models/console";
 import { toEntries } from "@/utils/console-conversation";
 import { useMessageScroll } from "@/viewmodels/use-message-scroll";
 import { useNow } from "@/viewmodels/use-now";
@@ -19,6 +19,30 @@ interface ConversationMessagesProps {
   readonly focus: MessageFocusProps;
 }
 
+interface EntryViewProps {
+  readonly entry: ConversationEntryType;
+  readonly employeeName: string;
+  readonly focus: MessageFocusProps;
+}
+
+function EntryView({ entry, employeeName, focus }: EntryViewProps) {
+  if (entry.kind === "day") {
+    return <p className="text-center text-xs font-semibold text-ink-3">{entry.label}</p>;
+  }
+
+  return entry.message.authorKind === "system" ? (
+    <SystemLine message={entry.message} />
+  ) : (
+    <MessageBubble
+      message={entry.message}
+      employeeName={employeeName}
+      highlightQuery={focus.highlightQuery}
+      isActive={entry.message.id === focus.activeMessageId}
+      isDecisionOpen={entry.message.id === focus.decisionMessageId}
+    />
+  );
+}
+
 export function ConversationMessages({ messages, employeeName, focus }: ConversationMessagesProps) {
   const now = useNow();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,29 +57,17 @@ export function ConversationMessages({ messages, employeeName, focus }: Conversa
   });
 
   return (
-    <div ref={containerRef} className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-5">
-      {toEntries(messages, now).map((entry) => {
-        if (entry.kind === "day") {
-          return (
-            <p key={entry.key} className="text-center text-xs font-semibold text-ink-3">
-              {entry.label}
-            </p>
-          );
-        }
-
-        return entry.message.authorKind === "system" ? (
-          <SystemLine key={entry.key} message={entry.message} />
-        ) : (
-          <MessageBubble
-            key={entry.key}
-            message={entry.message}
-            employeeName={employeeName}
-            highlightQuery={focus.highlightQuery}
-            isActive={entry.message.id === focus.activeMessageId}
-            isDecisionOpen={entry.message.id === focus.decisionMessageId}
-          />
-        );
-      })}
+    <div
+      ref={containerRef}
+      role="log"
+      aria-live="polite"
+      aria-relevant="additions"
+      aria-label="Mensagens da conversa"
+      className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-5"
+    >
+      {toEntries(messages, now).map((entry) => (
+        <EntryView key={entry.key} entry={entry} employeeName={employeeName} focus={focus} />
+      ))}
       <div ref={endRef} />
     </div>
   );

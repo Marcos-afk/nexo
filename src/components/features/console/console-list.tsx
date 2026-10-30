@@ -1,7 +1,8 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { CONSOLE_TITLE } from "@/constants/console";
+import { Button } from "@/components/ui/button";
+import { CONSOLE_TITLE, RETRY_LABEL } from "@/constants/console";
 import type { ConsoleProps } from "@/models/console";
 import { useConsole } from "@/viewmodels/use-console";
 import { useConsoleAvailability } from "@/viewmodels/use-console-availability";
@@ -17,7 +18,7 @@ interface ConsoleListProps {
 }
 
 export function ConsoleList({ initial }: ConsoleListProps) {
-  const { overview, error, filter, query, isSearching, onFilterChange, onQueryChange } =
+  const { overview, error, onRetry, filter, query, isSearching, onFilterChange, onQueryChange } =
     useConsole(initial);
   const { availability, isSaving, onToggle } = useConsoleAvailability(initial.me.availability);
   const { id: selectedId } = useParams<{ id?: string }>();
@@ -37,9 +38,12 @@ export function ConsoleList({ initial }: ConsoleListProps) {
         <SearchBox value={query} onChange={onQueryChange} />
         <FilterTabs active={filter} counts={overview.counts} onChange={onFilterChange} />
         {error && (
-          <p role="alert" className="text-xs text-danger-text">
-            {error}
-          </p>
+          <div role="alert" className="flex items-center gap-2 text-xs text-danger-text">
+            <p className="min-w-0 flex-1">{error}</p>
+            <Button.Root variant="outline" onClick={onRetry} className="h-8 px-3 text-xs">
+              {RETRY_LABEL}
+            </Button.Root>
+          </div>
         )}
       </header>
       <ConversationList
