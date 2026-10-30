@@ -57,6 +57,10 @@ describe("classifyModelError: unavailable", () => {
     { name: "a timeout", error: named("TimeoutError") },
     { name: "an abort", error: named("AbortError") },
     { name: "a Mastra step timeout", error: named("MastraTimeoutError") },
+    {
+      name: "a missing API key",
+      error: new Error("Could not find API key process.env.GOOGLE_API_KEY for model id google/x"),
+    },
   ])("maps $name", ({ error }) => {
     expect(classifyModelError(error)).toBeInstanceOf(ModelUnavailableError);
   });

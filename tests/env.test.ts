@@ -48,11 +48,6 @@ describe("parseEnv", () => {
       source: { LEGACY_OUTAGE_SECONDS: "abc" },
       variable: "LEGACY_OUTAGE_SECONDS",
     },
-    {
-      name: "an empty model key",
-      source: { GOOGLE_GENERATIVE_AI_API_KEY: "" },
-      variable: "GOOGLE_GENERATIVE_AI_API_KEY",
-    },
   ])("rejects $name and names only the variable", ({ source, variable }) => {
     const failure = (() => {
       try {
@@ -67,5 +62,16 @@ describe("parseEnv", () => {
     expect((failure as Error).message).toBe(
       `Variáveis de ambiente ausentes ou inválidas: ${variable}.`,
     );
+  });
+});
+
+describe("parseEnv: an unfilled model key", () => {
+  it.each([
+    { name: "an empty value", value: "" },
+    { name: "only spaces", value: "   " },
+  ])("treats $name as not configured, as in a copied .env.example", ({ value }) => {
+    expect(
+      parseEnv({ GOOGLE_GENERATIVE_AI_API_KEY: value }).GOOGLE_GENERATIVE_AI_API_KEY,
+    ).toBeUndefined();
   });
 });
