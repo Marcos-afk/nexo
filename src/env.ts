@@ -3,9 +3,12 @@ import { InvalidEnvironmentError } from "./domain/errors";
 
 const environments = ["development", "production", "test"] as const;
 
+const blankAsMissing = (value: unknown): unknown =>
+  typeof value === "string" && value.trim() === "" ? undefined : value;
+
 const envSchema = z.object({
   NODE_ENV: z.enum(environments).default("development"),
-  GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
+  GOOGLE_GENERATIVE_AI_API_KEY: z.preprocess(blankAsMissing, z.string().min(1).optional()),
   LEGACY_OUTAGE_SECONDS: z.coerce.number().nonnegative().default(0),
 });
 
