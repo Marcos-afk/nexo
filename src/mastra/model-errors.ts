@@ -10,6 +10,7 @@ const UNAVAILABLE_STATUS_CODES: ReadonlySet<number> = new Set([
   HTTP_REQUEST_TIMEOUT,
 ]);
 const MAX_CAUSE_DEPTH = 5;
+const MISSING_API_KEY_PATTERN = /could not find api key/i;
 const RETRY_AFTER_HEADER = "retry-after";
 const RETRY_IN_PATTERN = /retry in (?:(\d+)h)?(?:(\d+)m)?([\d.]+)s/i;
 const SECONDS_PER_MINUTE = 60;
@@ -68,6 +69,9 @@ const isUnavailableStatus = (statusCode: number | undefined): boolean =>
 const isTimeout = (error: unknown): boolean =>
   error instanceof Error && TIMEOUT_ERROR_NAMES.has(error.name);
 
+const isMissingApiKey = (error: unknown): boolean =>
+  error instanceof Error && MISSING_API_KEY_PATTERN.test(error.message);
+
 const classifySingle = (error: unknown): ModelFailure | null => {
   if (APICallError.isInstance(error)) {
     if (error.statusCode === HTTP_TOO_MANY_REQUESTS) {
@@ -79,7 +83,9 @@ const classifySingle = (error: unknown): ModelFailure | null => {
       : null;
   }
 
-  return isTimeout(error) ? new ModelUnavailableError({ cause: error }) : null;
+  return isTimeout(error) || isMissingApiKey(error)
+    ? new ModelUnavailableError({ cause: error })
+    : null;
 };
 
 export const classifyModelError = (error: unknown): ModelFailure | null =>
