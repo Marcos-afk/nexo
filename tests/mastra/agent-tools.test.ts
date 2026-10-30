@@ -226,6 +226,19 @@ describe("buildDraft", () => {
     expect(await tickets.list(ANA)).toHaveLength(before.length);
   });
 
+  it("refuses a critical draft when only one person is affected, and explains why", async () => {
+    const { tools, tickets } = await createTools();
+    const before = await tickets.list(ANA);
+    const result = await invoke(tools.buildDraft, {
+      ...validCreate,
+      ticket: { ...validCreate.ticket, priority: "critical", affected: "Somente eu" },
+    });
+
+    expect(result).toHaveProperty("error");
+    expect(JSON.stringify(result)).toContain("prioridade crítica");
+    expect(await tickets.list(ANA)).toHaveLength(before.length);
+  });
+
   it.each([
     { name: "create without the ticket", input: { mode: "create" } },
     { name: "update without the note", input: { mode: "update", ticketNumber: "INC-20311" } },

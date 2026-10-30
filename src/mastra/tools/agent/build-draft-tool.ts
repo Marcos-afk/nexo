@@ -20,7 +20,7 @@ const flatInputSchema = z.object({
 });
 
 const describeIssues = (error: z.ZodError): string =>
-  `${INCOMPLETE_DRAFT_MESSAGE} ${error.issues.map((issue) => issue.path.join(".")).join(", ")}.`;
+  `${INCOMPLETE_DRAFT_MESSAGE} ${error.issues.map((issue) => `${issue.path.join(".")} (${issue.message})`).join("; ")}.`;
 
 export const createBuildDraftTool = ({ drafts, clock }: AgentToolDeps) =>
   createTool({

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CRITICAL_NEEDS_WIDE_IMPACT_MESSAGE, isPriorityConsistent } from "@/domain/affected-scope";
 import { draftModes, draftStatuses } from "@/domain/conversation";
 import { ticketPriorities } from "@/domain/sla";
 import { ticketCategories } from "@/domain/ticket-category";
@@ -49,14 +50,19 @@ export const draftNoteEditSchema = z.object({
   note: z.string().trim().min(1, EMPTY_NOTE_MESSAGE).max(MAX_NOTE_LENGTH, LONG_NOTE_MESSAGE),
 }) satisfies z.ZodType<DraftNoteValues>;
 
-export const draftEditSchema = z.object({
-  title: z.string().trim().min(1, EMPTY_TITLE_MESSAGE).max(MAX_TITLE_LENGTH, LONG_TITLE_MESSAGE),
-  description: z
-    .string()
-    .trim()
-    .min(1, EMPTY_DESCRIPTION_MESSAGE)
-    .max(MAX_DESCRIPTION_LENGTH, LONG_DESCRIPTION_MESSAGE),
-  category: z.enum(ticketCategories),
-  priority: z.enum(ticketPriorities),
-  affected: z.string().trim(),
-}) satisfies z.ZodType<DraftEditValues>;
+export const draftEditSchema = z
+  .object({
+    title: z.string().trim().min(1, EMPTY_TITLE_MESSAGE).max(MAX_TITLE_LENGTH, LONG_TITLE_MESSAGE),
+    description: z
+      .string()
+      .trim()
+      .min(1, EMPTY_DESCRIPTION_MESSAGE)
+      .max(MAX_DESCRIPTION_LENGTH, LONG_DESCRIPTION_MESSAGE),
+    category: z.enum(ticketCategories),
+    priority: z.enum(ticketPriorities),
+    affected: z.string().trim(),
+  })
+  .refine(({ priority, affected }) => isPriorityConsistent(priority, affected || null), {
+    path: ["priority"],
+    message: CRITICAL_NEEDS_WIDE_IMPACT_MESSAGE,
+  }) satisfies z.ZodType<DraftEditValues>;

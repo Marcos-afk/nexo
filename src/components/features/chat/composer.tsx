@@ -3,7 +3,9 @@
 import { cx } from "class-variance-authority";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MAX_CHAT_MESSAGE_LENGTH } from "@/domain/input-limits";
 import type { ChatCounterProps, ChatNoticeToneType } from "@/models/chat";
+import { lengthCounterOf } from "@/utils/chat-state";
 import { useComposer } from "@/viewmodels/use-composer";
 
 const ICON_SIZE = 16;
@@ -29,12 +31,15 @@ export function Composer({ onSend, isBusy, isDisabled, placeholder, counter }: C
     isDisabled,
   });
 
+  const lengthCounter = lengthCounterOf(text.length);
+
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-1.5">
       <div className="flex min-h-12 items-center gap-2 rounded-xl border border-border-strong bg-paper py-1.5 pr-1.5 pl-4 focus-within:border-primary">
         <textarea
           ref={inputRef}
           rows={1}
+          maxLength={MAX_CHAT_MESSAGE_LENGTH}
           value={text}
           onChange={onChange}
           onKeyDown={onKeyDown}
@@ -48,7 +53,12 @@ export function Composer({ onSend, isBusy, isDisabled, placeholder, counter }: C
           <ArrowRight size={ICON_SIZE} aria-hidden="true" />
         </Button.Root>
       </div>
-      <p className={cx("text-right text-xs", COUNTER_CLASSES[counter.tone])}>{counter.text}</p>
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <p className={cx(lengthCounter && COUNTER_CLASSES[lengthCounter.tone])}>
+          {lengthCounter?.text}
+        </p>
+        <p className={COUNTER_CLASSES[counter.tone]}>{counter.text}</p>
+      </div>
     </form>
   );
 }
