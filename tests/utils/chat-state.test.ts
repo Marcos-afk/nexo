@@ -8,9 +8,28 @@ import {
   OFFLINE_NOTICE,
   OFFLINE_PLACEHOLDER,
 } from "../../src/constants/chat";
-import { counterOf, isComposerDisabled, noticeOf, placeholderOf } from "../../src/utils/chat-state";
+import { MAX_CHAT_MESSAGE_LENGTH } from "../../src/domain/input-limits";
+import {
+  counterOf,
+  isComposerDisabled,
+  lengthCounterOf,
+  noticeOf,
+  placeholderOf,
+} from "../../src/utils/chat-state";
 
 const LIMIT = 30;
+
+describe("lengthCounterOf", () => {
+  it.each([
+    { length: 0, expected: null },
+    { length: 1599, expected: null },
+    { length: 1600, expected: { text: "1600/2000 caracteres", tone: "warning" } },
+    { length: 1999, expected: { text: "1999/2000 caracteres", tone: "warning" } },
+    { length: MAX_CHAT_MESSAGE_LENGTH, expected: { text: "2000/2000 caracteres", tone: "danger" } },
+  ])("$length characters", ({ length, expected }) => {
+    expect(lengthCounterOf(length)).toEqual(expected);
+  });
+});
 
 describe("counterOf", () => {
   it.each([

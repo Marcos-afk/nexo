@@ -8,6 +8,7 @@ export const TYPING_ENDPOINT = "/api/chat/typing";
 export const TYPING_SIGNAL_INTERVAL_MS = 2000;
 export const SYNC_ERROR = "Não foi possível atualizar a conversa agora.";
 export const MESSAGE_LIMIT_WARNING_THRESHOLD = 25;
+export const LENGTH_WARNING_THRESHOLD = 1600;
 
 export const CHAT_ACTION_LABELS: Readonly<Record<string, string>> = {
   searchHelpArticles: "buscou na central de ajuda",
