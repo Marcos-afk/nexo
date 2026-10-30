@@ -8,6 +8,8 @@ export const SEARCH_DEBOUNCE_MS = 300;
 export const REFRESH_THROTTLE_MS = 300;
 export const TYPING_EXPIRY_MS = 4000;
 export const TYPING_LABEL = "digitando…";
+export const WIDE_LAYOUT_QUERY = "(min-width: 1440px)";
+export const RETRY_LABEL = "Tentar de novo";
 export const DISPLAY_TIME_ZONE = "America/Sao_Paulo";
 
 export const CONSOLE_TITLE = "Conversas";

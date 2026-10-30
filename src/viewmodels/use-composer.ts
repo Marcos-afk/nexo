@@ -1,50 +1,57 @@
 import { type ChangeEvent, type KeyboardEvent, type SubmitEvent, useRef, useState } from "react";
-import { useTypingSignal } from "./use-typing-signal";
 
 interface UseComposerProps {
-  readonly onSend: (text: string) => void;
+  readonly onSend: (text: string) => unknown;
+  readonly onTyping?: () => void;
   readonly isBusy: boolean;
   readonly isDisabled: boolean;
 }
 
-export function useComposer({ onSend, isBusy, isDisabled }: UseComposerProps) {
+const isSubmitKey = (event: KeyboardEvent<HTMLTextAreaElement>): boolean =>
+  event.key === "Enter" &&
+  !(event.shiftKey || event.metaKey || event.ctrlKey) &&
+  !event.nativeEvent.isComposing;
+
+export function useComposer({ onSend, onTyping, isBusy, isDisabled }: UseComposerProps) {
   const [text, setText] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const signalTyping = useTypingSignal();
 
   const canSend = text.trim().length > 0 && !isBusy && !isDisabled;
 
-  const send = () => {
+  const send = async () => {
     if (!canSend) {
       return;
     }
 
-    onSend(text.trim());
+    const sent = await onSend(text.trim());
+
+    if (sent === false) {
+      return;
+    }
+
     setText("");
     inputRef.current?.focus();
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    const isModified = event.shiftKey || event.metaKey || event.ctrlKey;
-
-    if (event.key !== "Enter" || isModified || event.nativeEvent.isComposing) {
+    if (!isSubmitKey(event)) {
       return;
     }
 
     event.preventDefault();
-    send();
+    void send();
   };
 
   const onSubmit = (event: SubmitEvent) => {
     event.preventDefault();
-    send();
+    void send();
   };
 
   const onChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value);
 
     if (event.target.value.trim().length > 0) {
-      signalTyping();
+      onTyping?.();
     }
   };
 

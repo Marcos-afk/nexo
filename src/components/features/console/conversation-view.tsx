@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import type { ConsoleConversationProps } from "@/models/console";
 import { useConsoleConversation, useMarkRead } from "@/viewmodels/use-console-conversation";
 import { useConversationActions } from "@/viewmodels/use-conversation-actions";
 import { useConversationSearch } from "@/viewmodels/use-conversation-search";
+import { usePanelPreference } from "@/viewmodels/use-panel-preference";
 import { useTypingConversations } from "@/viewmodels/use-typing-conversations";
 import { CaseSummary } from "./case-summary";
 import { ConversationActions } from "./conversation-actions";
@@ -22,7 +22,7 @@ interface ConversationViewProps {
 export function ConversationView({ initial, decisionMessageId }: ConversationViewProps) {
   const { conversation, refresh } = useConsoleConversation(initial);
   const actions = useConversationActions({ conversationId: conversation.id, onDone: refresh });
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const panel = usePanelPreference();
   const search = useConversationSearch(conversation.messages);
   const isTyping = useTypingConversations().has(conversation.id);
 
@@ -38,8 +38,8 @@ export function ConversationView({ initial, decisionMessageId }: ConversationVie
             <ConversationActions
               conversation={conversation}
               actions={actions}
-              isPanelOpen={isPanelOpen}
-              onTogglePanel={() => setIsPanelOpen((current) => !current)}
+              isPanelOpen={panel.isOpen}
+              onTogglePanel={panel.onToggle}
               onSearch={search.onOpen}
             />
           }
@@ -57,9 +57,7 @@ export function ConversationView({ initial, decisionMessageId }: ConversationVie
         />
         <ConversationFooter conversation={conversation} actions={actions} />
       </div>
-      {isPanelOpen && (
-        <TicketsPanel conversationId={conversation.id} onClose={() => setIsPanelOpen(false)} />
-      )}
+      {panel.isOpen && <TicketsPanel conversationId={conversation.id} onClose={panel.onClose} />}
     </div>
   );
 }
