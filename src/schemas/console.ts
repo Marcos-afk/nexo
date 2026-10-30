@@ -115,6 +115,15 @@ export const conversationResponseSchema = z.object({
         readByEmployee: z.boolean().nullable(),
       }),
     ),
+    usage: z.object({
+      turns: z.number().int().nonnegative(),
+      tokensIn: z.number().int().nonnegative(),
+      tokensOut: z.number().int().nonnegative(),
+      totalTokens: z.number().int().nonnegative(),
+      averageLatencyMs: z.number().nullable(),
+      maxLatencyMs: z.number().nullable(),
+      models: z.array(z.object({ model: z.string(), turns: z.number().int().nonnegative() })),
+    }),
   }),
 }) satisfies z.ZodType<{ conversation: ConsoleConversationProps }>;
 

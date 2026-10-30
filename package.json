@@ -16,7 +16,8 @@
     "test:watch": "vitest",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
     "db:generate": "drizzle-kit generate",
-    "db:seed": "tsx src/db/seed-cli.ts"
+    "db:seed": "tsx src/db/seed-cli.ts",
+    "usage:report": "tsx src/db/usage-cli.ts"
   },
   "engines": {
     "node": ">=22.18.0"
