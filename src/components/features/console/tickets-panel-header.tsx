@@ -2,9 +2,9 @@ import { ArrowLeft, X } from "lucide-react";
 import { BACK_LABEL, CLOSE_PANEL_LABEL, ticketCountsOf, ticketsTitleOf } from "@/constants/console";
 import type { ConversationTicketsProps } from "@/models/console";
 
-const ICON_SIZE = 16;
+const ICON_SIZE = 18;
 const ICON_BUTTON_CLASSES =
-  "flex size-7 cursor-pointer items-center justify-center rounded-md text-ink-3 hover:bg-card hover:text-ink";
+  "flex size-9 cursor-pointer items-center justify-center rounded-full text-ink-2 hover:bg-card hover:text-ink";
 
 interface TicketsPanelHeaderProps {
   readonly tickets: ConversationTicketsProps | null;
@@ -20,7 +20,7 @@ export function TicketsPanelHeader({
   onClose,
 }: TicketsPanelHeaderProps) {
   return (
-    <header className="flex items-start gap-2 border-b border-rule px-4 py-3.5">
+    <header className="flex h-16 items-center gap-2 border-b border-rule pr-3.5 pl-5">
       {canGoBack && (
         <button
           type="button"
@@ -32,7 +32,7 @@ export function TicketsPanelHeader({
         </button>
       )}
       <div className="min-w-0 flex-1">
-        <h2 className="truncate text-sm font-bold text-ink">
+        <h2 className="truncate text-[15.5px] font-semibold text-ink">
           {tickets ? ticketsTitleOf(tickets.employeeName) : "Chamados"}
         </h2>
         {tickets && (

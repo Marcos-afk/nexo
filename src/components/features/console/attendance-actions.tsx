@@ -1,5 +1,6 @@
 "use client";
 
+import { Bot, CircleCheckBig } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   CANCEL_LABEL,
@@ -15,6 +16,8 @@ interface AttendanceActionsProps {
   readonly actions: ConversationActionsProps;
   readonly needsConfirmation: boolean;
 }
+
+const ICON_SIZE = 14;
 
 export function AttendanceActions({ actions, needsConfirmation }: AttendanceActionsProps) {
   const { isConfirming, onCloseClick, onCancel } = useCloseConfirmation({
@@ -48,15 +51,18 @@ export function AttendanceActions({ actions, needsConfirmation }: AttendanceActi
         variant="outline"
         onClick={actions.onReturn}
         disabled={actions.isBusy}
-        className="h-9 rounded-lg px-3.5"
+        className="h-9 gap-1.5 rounded-lg pr-3 pl-2.5"
       >
+        <Bot size={ICON_SIZE} aria-hidden="true" className="text-ink-2" />
         {RETURN_LABEL}
       </Button.Root>
       <Button.Root
+        variant="danger"
         onClick={onCloseClick}
         disabled={actions.isBusy}
-        className="h-9 rounded-lg px-3.5"
+        className="h-9 gap-1.5 rounded-lg pr-3 pl-2.5"
       >
+        <CircleCheckBig size={ICON_SIZE} aria-hidden="true" />
         {CLOSE_LABEL}
       </Button.Root>
     </div>

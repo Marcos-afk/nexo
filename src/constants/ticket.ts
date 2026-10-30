@@ -17,6 +17,31 @@ export const PRIORITY_TONES = {
   low: "neutral",
 } as const satisfies Record<TicketPriority, BadgeToneType>;
 
+export const PRIORITY_DOT_CLASSES = {
+  critical: "bg-danger",
+  high: "bg-warning",
+  medium: "bg-ink/40",
+  low: "bg-success",
+} as const satisfies Record<TicketPriority, string>;
+
+export const TONE_DOT_CLASSES = {
+  neutral: "bg-ink/40",
+  info: "bg-primary",
+  success: "bg-success",
+  warning: "bg-warning",
+  danger: "bg-danger",
+  violet: "bg-violet",
+} as const satisfies Record<BadgeToneType, string>;
+
+export const TONE_TEXT_CLASSES = {
+  neutral: "text-ink-3",
+  info: "text-primary-text",
+  success: "text-success-text",
+  warning: "text-warning-text",
+  danger: "text-danger-text",
+  violet: "text-violet-text",
+} as const satisfies Record<BadgeToneType, string>;
+
 export const TICKET_STATUS_TONES = {
   open: "info",
   in_progress: "info",

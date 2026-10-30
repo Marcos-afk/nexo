@@ -66,7 +66,7 @@ export function TicketsPanel({ conversationId, onClose }: TicketsPanelProps) {
   return (
     <aside
       aria-label="Chamados do funcionário"
-      className="flex w-80 shrink-0 flex-col border-l border-rule bg-paper"
+      className="flex w-85 shrink-0 flex-col border-l border-rule bg-paper"
     >
       <TicketsPanelHeader
         tickets={tickets}

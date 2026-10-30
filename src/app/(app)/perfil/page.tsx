@@ -27,10 +27,10 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-150 flex-col gap-8 px-10 py-12">
+    <div className="mx-auto flex w-full max-w-170 flex-col gap-8 px-10 py-12">
       <header className="flex flex-col gap-1.5">
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Meu perfil</h1>
-        <p className="text-sm text-ink-3">Seus dados de acesso ao service desk de TI.</p>
+        <h1 className="text-2xl font-bold tracking-[-0.4px] text-ink">Meu perfil</h1>
+        <p className="text-[14.5px] text-ink-3">Seus dados de acesso ao service desk de TI.</p>
       </header>
       <ProfileDataCard profile={profile} />
       <PasswordCard

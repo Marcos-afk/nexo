@@ -34,7 +34,7 @@ function ConversationPreview() {
   return (
     <div className="flex w-125 max-w-full flex-col gap-2.5 rounded-2xl border border-white/8 bg-white/4 p-4.5">
       <div className="flex justify-end">
-        <p className="rounded-[12px_12px_4px_12px] bg-paper px-3.5 py-2 text-[13.5px] text-ink">
+        <p className="rounded-[12px_12px_4px_12px] bg-paper px-3.5 py-2.25 text-[13.5px] text-ink">
           Meu notebook não conecta na VPN. Erro 809.
         </p>
       </div>
@@ -46,7 +46,7 @@ function ConversationPreview() {
         <p className="w-95 max-w-full rounded-[4px_12px_12px_12px] bg-white/8 px-3.5 py-2.5 text-[13.5px] leading-normal text-white">
           Pronto: abri o chamado com prioridade alta. Um analista fala com você em até 4 h úteis.
         </p>
-        <div className="flex w-fit items-center gap-2 rounded-xl bg-paper px-3 py-1.5 text-[12.5px]">
+        <div className="flex items-center gap-2 rounded-xl bg-paper px-3 py-1.75 text-[12.5px]">
           <span className="size-1.75 rounded-full bg-warning" />
           <span className="font-semibold text-ink">INC-20517</span>
           <span className="text-ink-3">Rede e VPN · Alta · em até 4 h</span>
@@ -58,7 +58,7 @@ function ConversationPreview() {
 
 export function ShowcaseView({ stats }: ShowcaseViewProps) {
   return (
-    <aside className="hidden w-[55%] max-w-200 shrink-0 flex-col justify-between overflow-hidden bg-ink px-16 pt-10 pb-12 lg:flex">
+    <aside className="hidden w-5/9 max-w-200 shrink-0 flex-col justify-between overflow-hidden bg-ink px-16 pt-10 pb-12 lg:flex">
       <div className="flex items-center gap-2.5 text-white">
         <NexoMark />
         <span className="text-[17px] font-bold tracking-[-0.2px]">Nexo Assist</span>

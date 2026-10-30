@@ -27,7 +27,11 @@ interface EntryViewProps {
 
 function EntryView({ entry, employeeName, focus }: EntryViewProps) {
   if (entry.kind === "day") {
-    return <p className="text-center text-xs font-semibold text-ink-3">{entry.label}</p>;
+    return (
+      <p className="mx-auto rounded-full bg-paper px-3 py-1 text-xs font-semibold text-ink-3 shadow-xs">
+        {entry.label}
+      </p>
+    );
   }
 
   return entry.message.authorKind === "system" ? (
@@ -63,7 +67,7 @@ export function ConversationMessages({ messages, employeeName, focus }: Conversa
       aria-live="polite"
       aria-relevant="additions"
       aria-label="Mensagens da conversa"
-      className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-5"
+      className="flex flex-1 flex-col gap-4 overflow-y-auto bg-thread px-10 pt-5 pb-4"
     >
       {toEntries(messages, now).map((entry) => (
         <EntryView key={entry.key} entry={entry} employeeName={employeeName} focus={focus} />

@@ -32,7 +32,7 @@ export function ConsoleList({ initial }: ConsoleListProps) {
     >
       <header className="flex flex-col gap-3 px-4 pt-4 pb-2.5">
         <div className="flex items-center gap-2">
-          <h2 className="flex-1 text-xl font-bold tracking-tight text-ink">{CONSOLE_TITLE}</h2>
+          <h2 className="flex-1 text-xl font-bold tracking-[-0.3px] text-ink">{CONSOLE_TITLE}</h2>
           <AvailabilityToggle availability={availability} isSaving={isSaving} onToggle={onToggle} />
         </div>
         <SearchBox value={query} onChange={onQueryChange} />

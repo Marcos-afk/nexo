@@ -1,24 +1,27 @@
-import { Check, FilePen } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { cx } from "class-variance-authority";
 import {
   DRAFT_MODE_LABELS,
   DRAFT_STATUS_LABELS,
+  PRIORITY_DOT_CLASSES,
   PRIORITY_LABELS,
-  PRIORITY_TONES,
 } from "@/constants/ticket";
 import { formatOfficeDateTime } from "@/domain/sla";
 import type { DraftProps } from "@/models/draft";
-import type { BadgeToneType } from "@/models/ticket";
 import { draftCodeOf } from "@/utils/draft-code";
 
-const ICON_SIZE = 14;
 const NOT_INFORMED = "Não informado";
 
-const STATUS_TONES = {
-  pending: "warning",
-  confirmed: "success",
-  cancelled: "neutral",
-} as const satisfies Record<DraftProps["status"], BadgeToneType>;
+const STATUS_DOT_CLASSES = {
+  pending: "bg-warning",
+  confirmed: "bg-success",
+  cancelled: "bg-ink/40",
+} as const satisfies Record<DraftProps["status"], string>;
+
+const STATUS_TEXT_CLASSES = {
+  pending: "text-warning-text",
+  confirmed: "text-success-text",
+  cancelled: "text-ink-3",
+} as const satisfies Record<DraftProps["status"], string>;
 
 interface DraftSummaryProps {
   readonly draft: DraftProps;
@@ -33,7 +36,7 @@ function Field({ label, children }: FieldProps) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <dt className="text-xs text-ink-3">{label}</dt>
-      <dd className="text-sm text-ink">{children}</dd>
+      <dd className="flex items-center gap-1.5 text-[14.5px] font-medium text-ink">{children}</dd>
     </div>
   );
 }
@@ -42,17 +45,24 @@ function Eyebrow({ draft }: DraftSummaryProps) {
   const isCreated = draft.status === "confirmed" && draft.mode === "create";
 
   return (
-    <div className="flex flex-wrap items-center gap-2 pb-0.5 text-xs text-ink-3">
-      <span className="flex items-center gap-1.5 font-semibold text-ink-2">
-        {isCreated ? (
-          <Check size={ICON_SIZE} aria-hidden="true" />
-        ) : (
-          <FilePen size={ICON_SIZE} aria-hidden="true" />
-        )}
+    <div className="flex items-center gap-2 pb-0.5 text-xs text-ink-3">
+      <span className="font-medium">
         {isCreated ? "Chamado criado" : DRAFT_MODE_LABELS[draft.mode]}
       </span>
+      <span aria-hidden="true" className="size-0.75 rounded-full bg-rule" />
       <span>{isCreated ? draft.targetTicketNumber : `Rascunho ${draftCodeOf(draft.id)}`}</span>
-      <Badge.Root tone={STATUS_TONES[draft.status]}>{DRAFT_STATUS_LABELS[draft.status]}</Badge.Root>
+      <span
+        className={cx(
+          "ml-auto flex items-center gap-1.5 font-medium",
+          STATUS_TEXT_CLASSES[draft.status],
+        )}
+      >
+        <span
+          aria-hidden="true"
+          className={cx("size-1.5 rounded-full", STATUS_DOT_CLASSES[draft.status])}
+        />
+        {DRAFT_STATUS_LABELS[draft.status]}
+      </span>
     </div>
   );
 }
@@ -66,19 +76,21 @@ function CreateBody({ draft }: DraftSummaryProps) {
 
   return (
     <>
-      <h3 className="text-lg leading-tight font-semibold tracking-tight text-ink">
+      <h3 className="text-lg leading-tight font-semibold tracking-[-0.2px] text-ink">
         {ticket.title}
       </h3>
       <p className="text-sm leading-normal whitespace-pre-wrap text-ink-2">{ticket.description}</p>
-      <dl className="grid grid-cols-3 gap-6 pt-3">
+      <dl className="mt-2 grid grid-cols-3 gap-6 border-t border-rule pt-3">
         <Field label="Categoria">{ticket.category}</Field>
         <Field label="Prioridade">
-          <Badge.Root tone={PRIORITY_TONES[ticket.priority]}>
-            {PRIORITY_LABELS[ticket.priority]}
-          </Badge.Root>
+          <span
+            aria-hidden="true"
+            className={cx("size-1.5 rounded-full", PRIORITY_DOT_CLASSES[ticket.priority])}
+          />
+          {PRIORITY_LABELS[ticket.priority]}
           {draft.dueAt && (
-            <span className="mt-1 block text-xs text-ink-3">
-              resposta até {formatOfficeDateTime(new Date(draft.dueAt))}
+            <span className="text-sm font-normal text-ink-3">
+              · resposta até {formatOfficeDateTime(new Date(draft.dueAt))}
             </span>
           )}
         </Field>
