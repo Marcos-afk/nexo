@@ -6,6 +6,8 @@ export const CONSOLE_ENDPOINT = "/api/console/conversations";
 export const AVAILABILITY_ENDPOINT = "/api/console/availability";
 export const SEARCH_DEBOUNCE_MS = 300;
 export const REFRESH_THROTTLE_MS = 300;
+export const TYPING_EXPIRY_MS = 4000;
+export const TYPING_LABEL = "digitando…";
 export const DISPLAY_TIME_ZONE = "America/Sao_Paulo";
 
 export const CONSOLE_TITLE = "Conversas";

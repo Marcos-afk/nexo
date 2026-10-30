@@ -19,6 +19,10 @@ export interface ConversationUpdatedEvent extends RealtimeEventBase {
   readonly assignedAnalystId: string | null;
 }
 
+export interface TypingStartedEvent extends RealtimeEventBase {
+  readonly type: "typing.started";
+}
+
 export interface PresenceChangedEvent {
   readonly type: "presence.changed";
   readonly ownerId: string;
@@ -26,7 +30,11 @@ export interface PresenceChangedEvent {
   readonly at: string;
 }
 
-export type RealtimeEvent = MessageCreatedEvent | ConversationUpdatedEvent | PresenceChangedEvent;
+export type RealtimeEvent =
+  | MessageCreatedEvent
+  | ConversationUpdatedEvent
+  | TypingStartedEvent
+  | PresenceChangedEvent;
 
 export interface EventPublisher {
   readonly publish: (event: RealtimeEvent) => void;
