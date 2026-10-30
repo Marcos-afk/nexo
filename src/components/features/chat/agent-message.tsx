@@ -1,5 +1,5 @@
 import { AUTHOR_LABELS } from "@/constants/chat";
-import type { ChatLineProps } from "@/models/chat";
+import type { ChatAttachmentProps, ChatLineProps } from "@/models/chat";
 import { ActionLine } from "./action-line";
 import { AttachmentView } from "./attachment-view";
 import { DecisionPanel } from "./decision-panel";
@@ -27,6 +27,16 @@ function AnalystBadge({ level }: AnalystBadgeProps) {
 
 export function AgentMessage({ line, isSendDisabled, onSend }: AgentMessageProps) {
   const isAnalyst = line.authorKind === "analyst";
+  const choices = line.attachments.filter((attachment) => attachment.kind === "choices");
+  const others = line.attachments.filter((attachment) => attachment.kind !== "choices");
+  const renderAttachment = (attachment: ChatAttachmentProps) => (
+    <AttachmentView
+      key={attachment.key}
+      attachment={attachment}
+      isSendDisabled={isSendDisabled}
+      onSend={onSend}
+    />
+  );
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -35,19 +45,13 @@ export function AgentMessage({ line, isSendDisabled, onSend }: AgentMessageProps
         actions={line.actions}
         badge={isAnalyst ? <AnalystBadge level={line.analyst?.level ?? null} /> : null}
       />
-      {line.text && (
-        <div className="flex max-w-150 flex-col gap-2 rounded-xl rounded-tl-sm border border-rule bg-paper px-4 py-3 text-sm leading-normal text-ink">
-          <MarkdownText text={line.text} />
+      {(line.text || choices.length > 0) && (
+        <div className="flex max-w-150 flex-col gap-3 rounded-xl rounded-tl-sm border border-rule bg-paper px-4 py-3 text-[14.5px] leading-normal text-ink">
+          {line.text && <MarkdownText text={line.text} />}
+          {choices.map(renderAttachment)}
         </div>
       )}
-      {line.attachments.map((attachment) => (
-        <AttachmentView
-          key={attachment.key}
-          attachment={attachment}
-          isSendDisabled={isSendDisabled}
-          onSend={onSend}
-        />
-      ))}
+      {others.map(renderAttachment)}
       {line.authorKind === "agent" && <DecisionPanel messageId={line.id} />}
     </div>
   );

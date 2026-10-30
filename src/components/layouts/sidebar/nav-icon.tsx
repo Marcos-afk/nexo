@@ -2,7 +2,7 @@ import { MessageSquare, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import type { NavIconNameType } from "@/models/navigation";
 
-const ICON_SIZE = 18;
+const ICON_SIZE = 16;
 
 const NAV_ICONS = {
   "message-square": <MessageSquare size={ICON_SIZE} />,

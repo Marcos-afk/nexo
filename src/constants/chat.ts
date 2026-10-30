@@ -44,6 +44,9 @@ export const EMPTY_CHAT_SUGGESTIONS = [
   "Como redefino minha senha?",
 ] as const;
 
+export const CARD_CLASS =
+  "w-full rounded-2xl border border-ink/9 bg-paper shadow-[0_1px_2px_#1b24310d,0_6px_18px_#1b24310a]";
+
 export const COMPOSER_PLACEHOLDER = "Escreva para o Nexo…";
 export const OFFLINE_PLACEHOLDER = "O assistente está offline no momento";
 export const LIMIT_PLACEHOLDER = "Limite de mensagens atingido";
