@@ -1,6 +1,7 @@
 import {
   COMPOSER_PLACEHOLDER,
   DEGRADED_NOTICE,
+  LENGTH_WARNING_THRESHOLD,
   LIMIT_NOTICE,
   LIMIT_PLACEHOLDER,
   MESSAGE_LIMIT_WARNING_THRESHOLD,
@@ -10,6 +11,7 @@ import {
 } from "@/constants/chat";
 import type { ConversationMode } from "@/domain/conversation";
 import type { AssistantStatus } from "@/domain/health";
+import { MAX_CHAT_MESSAGE_LENGTH } from "@/domain/input-limits";
 import type { ChatCounterProps, ChatNoticeProps, ChatNoticeToneType } from "@/models/chat";
 
 export interface ChatStateProps {
@@ -30,6 +32,17 @@ export const counterOf = (count: number, limit: number): ChatCounterProps => ({
   text: `${count}/${limit} mensagens nesta sessão`,
   tone: counterToneOf(count, limit),
 });
+
+export const lengthCounterOf = (length: number): ChatCounterProps | null => {
+  if (length < LENGTH_WARNING_THRESHOLD) {
+    return null;
+  }
+
+  return {
+    text: `${length}/${MAX_CHAT_MESSAGE_LENGTH} caracteres`,
+    tone: length >= MAX_CHAT_MESSAGE_LENGTH ? "danger" : "warning",
+  };
+};
 
 export const noticeOf = ({
   isLimitReached,

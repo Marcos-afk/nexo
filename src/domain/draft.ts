@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTicketInputSchema } from "./ticket-input";
+import { createTicketInputSchema, newTicketInputSchema } from "./ticket-input";
 
 const MAX_NOTE_LENGTH = 2000;
 
@@ -7,7 +7,7 @@ const noteSchema = z.string().min(1).max(MAX_NOTE_LENGTH);
 const ticketNumberSchema = z.string().min(1);
 
 export const draftInputSchema = z.discriminatedUnion("mode", [
-  z.object({ mode: z.literal("create"), ticket: createTicketInputSchema }),
+  z.object({ mode: z.literal("create"), ticket: newTicketInputSchema }),
   z.object({ mode: z.literal("update"), ticketNumber: ticketNumberSchema, note: noteSchema }),
   z.object({ mode: z.literal("reopen"), ticketNumber: ticketNumberSchema }),
 ]);
