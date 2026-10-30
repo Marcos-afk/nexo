@@ -5,6 +5,7 @@ import type { ConsoleConversationProps } from "@/models/console";
 import { useConsoleConversation, useMarkRead } from "@/viewmodels/use-console-conversation";
 import { useConversationActions } from "@/viewmodels/use-conversation-actions";
 import { useConversationSearch } from "@/viewmodels/use-conversation-search";
+import { useTypingConversations } from "@/viewmodels/use-typing-conversations";
 import { CaseSummary } from "./case-summary";
 import { ConversationActions } from "./conversation-actions";
 import { ConversationFooter } from "./conversation-footer";
@@ -23,6 +24,7 @@ export function ConversationView({ initial, decisionMessageId }: ConversationVie
   const actions = useConversationActions({ conversationId: conversation.id, onDone: refresh });
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const search = useConversationSearch(conversation.messages);
+  const isTyping = useTypingConversations().has(conversation.id);
 
   useMarkRead(conversation);
 
@@ -31,6 +33,7 @@ export function ConversationView({ initial, decisionMessageId }: ConversationVie
       <div className="flex min-w-0 flex-1 flex-col">
         <ConversationHeader
           conversation={conversation}
+          isTyping={isTyping}
           actions={
             <ConversationActions
               conversation={conversation}

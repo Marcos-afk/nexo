@@ -10,6 +10,20 @@ const event: RealtimeEvent = {
   assignedAnalystId: null,
 };
 
+describe("isVisibleTo for typing", () => {
+  it("shows the typing signal to analysts and hides it from other employees", () => {
+    const typing: RealtimeEvent = {
+      type: "typing.started",
+      conversationId: "c-1",
+      ownerId: "emp-ana",
+      at: "2026-10-28T13:00:00.000Z",
+    };
+
+    expect(isVisibleTo(typing, { id: "analyst-rafael", role: "analyst" })).toBe(true);
+    expect(isVisibleTo(typing, { id: "emp-carla", role: "employee" })).toBe(false);
+  });
+});
+
 describe("isVisibleTo", () => {
   it.each<{ name: string; audience: EventAudience; visible: boolean }>([
     {

@@ -14,6 +14,7 @@ import { triageAgent } from "../mastra/agents/triage-agent";
 import { type AuthService, createAuthService } from "../services/auth/auth-service";
 import { type ConsoleService, createConsoleService } from "../services/console/console-service";
 import type { ConversationServiceDeps } from "../services/conversations/conversation-service";
+import { createTypingSignal, type TypingSignal } from "../services/conversations/typing-signal";
 import { createDecisionService } from "../services/decisions/decision-service";
 import { createDraftService } from "../services/drafts/draft-service";
 import { createHandoffService } from "../services/handoff/handoff-service";
@@ -53,6 +54,7 @@ export interface Container {
   readonly stats: StatsService;
   readonly console: ConsoleService;
   readonly presence: PresenceTracker;
+  readonly typing: TypingSignal;
   readonly health: HealthReporter;
   readonly events: EventBus<RealtimeEvent>;
 }
@@ -104,6 +106,7 @@ const createContainer = async (): Promise<Container> => {
     stats: createStatsService({ database, clock: systemClock }),
     console: createConsoleService({ ...conversations, presence }),
     presence,
+    typing: createTypingSignal(conversations),
     health: createHealthReporter({ modelHealth, ticketSystem: outage, clock: systemClock }),
     events,
   };
